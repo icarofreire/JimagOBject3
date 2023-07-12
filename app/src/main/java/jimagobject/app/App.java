@@ -10,6 +10,7 @@ import static jimagobject.utilities.StringUtils.join;
 import static jimagobject.utilities.StringUtils.split;
 import static jimagobject.app.MessageUtils.getMessage;
 import jimagobject.utilities.ReadImages;
+import jimagobject.utilities.WriteObj;
 
 import org.apache.commons.text.WordUtils;
 
@@ -20,8 +21,8 @@ public class App {
         // String result = join(tokens);
         // System.out.println(WordUtils.capitalize(result));
 
-        ReadImages read = new ReadImages();
-        read.read(new File("/home/icaro/Downloads/dicom/teste/teste2"));
+        WriteObj w = new WriteObj();
+        w.getVertex();
 
     }
 }

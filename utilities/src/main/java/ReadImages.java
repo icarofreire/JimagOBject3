@@ -22,54 +22,68 @@ import AC_DicomIO.AC_DicomReader;
 
 public final class ReadImages {
 
-    private final HashMap<File, byte[]> filesBytes = new HashMap<File, byte[]>();
     private final HashMap<Long, byte[]> instanceNumberFileBytes = new HashMap<Long, byte[]>();
     private final Vector<byte[]> vbytesImages = new Vector<byte[]>();
+    private final TreeMap<Long, byte[]> treeMapInstanceNumberFileBytes = new TreeMap<>();
+    private final HashMap<String, byte[]> imagePixelData = new HashMap<String, byte[]>();
+
+    // (0018,0050) Slice Thickness;
+    private String sliceThickness = null;
+
+    // (0028,0010) Number of rows in the image;
+    private String rows = null;
+    // (0028,0011) Number of columns in the image;
+    private String columns = null;
 
     public void read(File dirImages) {
         if(dirImages.exists()){
             File[] files = dirImages.listFiles();
             for(File img: files){
                 if(img.getName().indexOf(".dcm") != -1 || img.getName().indexOf(".DCM") != -1){
-                    LinkedHashMap<Integer, String[]> atributesDicom = parseDicomBreak(img);
+                    LinkedHashMap<Integer, String[]> atributesDicom = parseDicom(img);
                     if(atributesDicom != null){
                         String instanceNumber = (atributesDicom.containsKey((0x0020 << 16 | 0x0013))) ? (atributesDicom.get((0x0020 << 16 | 0x0013))[1]) : (null);
 
-                        InputStream imgStream = fileToInputStream(img);
-                        if(instanceNumber != null && imgStream != null){
-                            try{
-                                byte[] bytesImg = imgStream.readAllBytes();
-                                filesBytes.put(img, bytesImg);
+                        if(rows == null) rows = (atributesDicom.containsKey((0x0028 << 16 | 0x0010))) ? (atributesDicom.get((0x0028 << 16 | 0x0010))[1]) : (null);
+                        if(columns == null) columns = (atributesDicom.containsKey((0x0028 << 16 | 0x0011))) ? (atributesDicom.get((0x0028 << 16 | 0x0011))[1]) : (null);
+                        if(sliceThickness == null) sliceThickness = (atributesDicom.containsKey((0x0018 << 16 | 0x0050))) ? (atributesDicom.get((0x0018 << 16 | 0x0050))[1]) : (null);
 
-                                instanceNumberFileBytes.put(Long.parseLong(instanceNumber), bytesImg);
-                            }catch(IOException e){}
+                        if(imagePixelData.containsKey(img.getName())){
+                            instanceNumberFileBytes.put(Long.parseLong(instanceNumber),
+                            imagePixelData.get(img.getName()));
                         }
-                    }
 
+                    }
                 }
             }
-            TreeMap<Long, byte[]> sorted = hashSetToTreeMap();
-            readSortedDicoms(sorted);
+            hashSetToTreeMap();
+            readSortedDicoms();
         }
     }
-
-    // public HashMap<String, byte[]> getInstanceNumberFileBytes() {
-    //     return instanceNumberFileBytes;
-    // }
 
     public Vector<byte[]> getVbytesImages() {
         return vbytesImages;
     }
 
-    public TreeMap<Long, byte[]> hashSetToTreeMap() {
-        TreeMap<Long, byte[]> sorted = new TreeMap<>();
-        sorted.putAll(instanceNumberFileBytes);
-        return sorted;
+    public long getRows() {
+        return Long.parseLong(rows);
+    }
+    
+    public long getColumns() {
+        return Long.parseLong(columns);
     }
 
-    public void readSortedDicoms(TreeMap<Long, byte[]> sorted) {
+    public double getSliceThickness() {
+        return Double.parseDouble(sliceThickness);
+    }
+
+    public void hashSetToTreeMap() {
+        treeMapInstanceNumberFileBytes.putAll(instanceNumberFileBytes);
+    }
+
+    public void readSortedDicoms() {
         System.out.println("images:");
-        for (Map.Entry<Long, byte[]> entry : sorted.entrySet()){
+        for (Map.Entry<Long, byte[]> entry : treeMapInstanceNumberFileBytes.entrySet()){
             System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue()); 
             byte[] bytes = entry.getValue();
             vbytesImages.add(bytes);
@@ -92,6 +106,9 @@ public final class ReadImages {
             final AC_DcmStructure dcmStructure = dicomReader.getAttirbutes();
             if(dcmStructure != null){
                 attr = dcmStructure.getAttributes();
+                byte[] pixels = dcmStructure.getPixelData();
+                // System.out.println(">>" + pixels.length);
+                imagePixelData.put(dicom.getName(), pixels);
             }else{
                 /*\/ not dicom(.dcm/.ima) file; */
                 // System.out.println(">> [NULL];");
