@@ -44,22 +44,24 @@ public final class WriteObj {
 
             int conr = 0;
             int y = 0;
-            for(int x=0; x<pixels.length; x++){
+            int x = -1;
+            for(int i=0; i<pixels.length; i+=3){
                 conr++;
+                x++;
 
                 if(conr >= columns){
                     y++;
+                    x = 0;
                     conr=0;
                 }
+
                 // x y z;
                 if(myWriter != null){
                     try {
-                        myWriter.write("v " + x + " " + y + " " + x + "\n");
+                        myWriter.write("v " + x + " " + y + " " + z + "\n");
                     } catch (IOException e) { e.printStackTrace(); }
-                }
-
+                }   
             }
-            System.out.println(">>" + z);
             z += 1;
         }
         try {

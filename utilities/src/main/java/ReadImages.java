@@ -26,6 +26,7 @@ public final class ReadImages {
     private final Vector<byte[]> vbytesImages = new Vector<byte[]>();
     private final TreeMap<Long, byte[]> treeMapInstanceNumberFileBytes = new TreeMap<>();
     private final HashMap<String, byte[]> imagePixelData = new HashMap<String, byte[]>();
+    private final String extFile = ".ima";
 
     // (0018,0050) Slice Thickness;
     private String sliceThickness = null;
@@ -39,7 +40,7 @@ public final class ReadImages {
         if(dirImages.exists()){
             File[] files = dirImages.listFiles();
             for(File img: files){
-                if(img.getName().indexOf(".dcm") != -1 || img.getName().indexOf(".DCM") != -1){
+                if(img.getName().indexOf(extFile) != -1 || img.getName().indexOf(extFile.toUpperCase()) != -1){
                     LinkedHashMap<Integer, String[]> atributesDicom = parseDicom(img);
                     if(atributesDicom != null){
                         String instanceNumber = (atributesDicom.containsKey((0x0020 << 16 | 0x0013))) ? (atributesDicom.get((0x0020 << 16 | 0x0013))[1]) : (null);
@@ -52,7 +53,8 @@ public final class ReadImages {
                             instanceNumberFileBytes.put(Long.parseLong(instanceNumber),
                             imagePixelData.get(img.getName()));
                         }
-
+                    }else{
+                        /** não dicom; */
                     }
                 }
             }
