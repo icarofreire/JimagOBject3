@@ -18,6 +18,14 @@ import java.io.IOException;
 import java.io.InputStream;
 
 import jimagobject.utilities.ReadImages;
+import jimagobject.utilities.Picture;
+
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 
 public final class WriteObj {
 
@@ -38,35 +46,56 @@ public final class WriteObj {
             myWriter = new FileWriter(fObj, false);
         } catch (IOException e) { e.printStackTrace(); }
 
+        // /** \/ aplicação do edge detection; */
+        // EdgeDetector edge = new EdgeDetector();
+        // Picture picEdgeDetect = edge.apply(byte[] bytesImage);
 
-        double z = 0.0;
-        for(byte[] pixels : vbytesImages){
+        // Picture pic = new Picture(vbytesImages.get(1));
+        // pic.display();
 
-            int conr = 0;
-            int y = 0;
-            int x = -1;
-            for(int i=0; i<pixels.length; i+=3){
-                conr++;
-                x++;
+        /**\/ testes de leitura de imagens; */
+        try{
+            Path source = Paths.get("/home/icaro/Imagens/galen.jpg");
+            BufferedImage bi = ImageIO.read(source.toFile());
+            // convert BufferedImage to byte[]
+            // ByteArrayOutputStream baos = new ByteArrayOutputStream();
+            // ImageIO.write(bi, "jpg", baos);
+            // byte[] bytes = baos.toByteArray();
 
-                if(conr >= columns){
-                    y++;
-                    x = 0;
-                    conr=0;
-                }
-
-                // x y z;
-                if(myWriter != null){
-                    try {
-                        myWriter.write("v " + x + " " + y + " " + z + "\n");
-                    } catch (IOException e) { e.printStackTrace(); }
-                }   
-            }
-            z += 1;
+            Picture pic = new Picture(bi);
+            pic.display();
+        }catch(IOException e){
+            e.printStackTrace();
         }
-        try {
-            myWriter.close();
-        } catch (IOException e) { e.printStackTrace(); }
+
+        // double z = 0.0;
+        // for(byte[] pixels : vbytesImages){
+
+        //     int conr = 0;
+        //     int y = 0;
+        //     int x = -1;
+        //     for(int i=0; i<pixels.length; i+=3){
+        //         conr++;
+        //         x++;
+
+        //         if(conr >= columns){
+        //             y++;
+        //             x = 0;
+        //             conr=0;
+        //         }
+
+        //         // x y z;
+        //         if(myWriter != null){
+        //             try {
+        //                 myWriter.write("v " + x + " " + y + " " + z + "\n");
+        //             } catch (IOException e) { e.printStackTrace(); }
+        //         }   
+        //     }
+        //     z += 1;
+        // }
+        // try {
+        //     myWriter.close();
+        // } catch (IOException e) { e.printStackTrace(); }
 
     }
 
