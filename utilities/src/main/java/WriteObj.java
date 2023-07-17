@@ -31,7 +31,9 @@ public final class WriteObj {
 
     public void getVertex() {
         ReadImages read = new ReadImages();
-        read.read(new File("/home/icaro/Downloads/dicom/teste/teste2"));
+        // read.read(new File("/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004"));
+        // read.read(new File("/home/icaro/Downloads/dicom/teste/teste2"));
+        read.read(new File("/home/icaro/Downloads/dicom/teste/teste3"));
         Vector<byte[]> vbytesImages = read.getVbytesImages();
 
         long rows = read.getRows();
@@ -47,26 +49,53 @@ public final class WriteObj {
         } catch (IOException e) { e.printStackTrace(); }
 
         // /** \/ aplicação do edge detection; */
-        // EdgeDetector edge = new EdgeDetector();
-        // Picture picEdgeDetect = edge.apply(byte[] bytesImage);
+        int z = 0;
 
-        // Picture pic = new Picture(vbytesImages.get(1));
+        double spaceBetweenLayers = 0.005;
+        double xCoordScale = 0.01;
+        double yCoordScale = 0.01;
+        EdgeDetector edge = new EdgeDetector();
+        for(byte[] pixels : vbytesImages){
+            Picture picEdgeDetect = edge.apply(pixels);
+            for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
+                for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
+
+                    Color cor = picEdgeDetect.get(x, y);
+                    int argb = picEdgeDetect.getRGB(x, y);
+                    int alpha =  (argb >> 24) & 0xFF;
+                    if (alpha == 255 && cor.equals(Color.black) ){
+                        // x y z;
+                        if(myWriter != null){
+                            try {
+                                myWriter.write("v " + (x) + " " + (y) + " " + z + "\n");
+                            } catch (IOException e) { e.printStackTrace(); }
+                        }
+                    }
+                }
+            }
+            z += 1;
+        }
+        try {
+            myWriter.close();
+        } catch (IOException e) { e.printStackTrace(); }
+
+        // Picture pic = new Picture(vbytesImages.get(0));
         // pic.display();
 
-        /**\/ testes de leitura de imagens; */
-        try{
-            Path source = Paths.get("/home/icaro/Imagens/galen.jpg");
-            BufferedImage bi = ImageIO.read(source.toFile());
-            // convert BufferedImage to byte[]
-            // ByteArrayOutputStream baos = new ByteArrayOutputStream();
-            // ImageIO.write(bi, "jpg", baos);
-            // byte[] bytes = baos.toByteArray();
+        // /**\/ testes de leitura de imagens; */
+        // try{
+        //     Path source = Paths.get("/home/icaro/Imagens/galen.jpg");
+        //     BufferedImage bi = ImageIO.read(source.toFile());
+        //     // convert BufferedImage to byte[]
+        //     // ByteArrayOutputStream baos = new ByteArrayOutputStream();
+        //     // ImageIO.write(bi, "jpg", baos);
+        //     // byte[] bytes = baos.toByteArray();
 
-            Picture pic = new Picture(bi);
-            pic.display();
-        }catch(IOException e){
-            e.printStackTrace();
-        }
+        //     Picture pic = new Picture(bi);
+        //     pic.display();
+        // }catch(IOException e){
+        //     e.printStackTrace();
+        // }
 
         // double z = 0.0;
         // for(byte[] pixels : vbytesImages){

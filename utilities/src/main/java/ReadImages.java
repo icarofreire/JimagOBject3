@@ -4,6 +4,7 @@
 package jimagobject.utilities;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.HashSet;
 import java.util.HashMap;
 import java.util.TreeMap;
@@ -26,7 +27,7 @@ public final class ReadImages {
     private final Vector<byte[]> vbytesImages = new Vector<byte[]>();
     private final TreeMap<Long, byte[]> treeMapInstanceNumberFileBytes = new TreeMap<>();
     private final HashMap<String, byte[]> imagePixelData = new HashMap<String, byte[]>();
-    private final String extFile = ".ima";
+    private final String extFile = ".jpg";
 
     // (0018,0050) Slice Thickness;
     private String sliceThickness = null;
@@ -39,7 +40,9 @@ public final class ReadImages {
     public void read(File dirImages) {
         if(dirImages.exists()){
             File[] files = dirImages.listFiles();
+            long index = 0;
             for(File img: files){
+                index++;
                 if(img.getName().indexOf(extFile) != -1 || img.getName().indexOf(extFile.toUpperCase()) != -1){
                     LinkedHashMap<Integer, String[]> atributesDicom = parseDicom(img);
                     if(atributesDicom != null){
@@ -55,6 +58,13 @@ public final class ReadImages {
                         }
                     }else{
                         /** não dicom; */
+                        try{
+                            instanceNumberFileBytes.put(index, Files.readAllBytes(img.toPath()));
+                            /*\/ dados dedutivos para fins de teste; */
+                            rows = "500";
+                            columns = "500";
+                            sliceThickness = "0.5";
+                        }catch(IOException e){}
                     }
                 }
             }
