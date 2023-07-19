@@ -3,29 +3,19 @@
  */
 package jimagobject.utilities;
 
-import java.io.FileInputStream;
 import java.io.IOException;
-import java.io.InputStream;
-import java.io.ByteArrayInputStream;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.awt.Color;
 import java.awt.image.BufferedImage;
 import javax.imageio.ImageIO;
-import java.awt.Graphics2D;
-
-import java.nio.ByteBuffer;
-import java.awt.image.DataBuffer;
-import java.awt.image.WritableRaster;
-import java.awt.image.ColorModel;
-import java.awt.image.DataBufferUShort;
-import java.awt.image.Raster;
-import java.awt.image.ComponentColorModel;
-import java.awt.Transparency;
-import java.awt.color.ColorSpace;
 
 import jimagobject.utilities.GUIPanel;
+import jimagobject.utilities.ConvertImg;
 
+/*
+ * ;
+ */
 public final class Picture {
 
     private BufferedImage image;
@@ -33,7 +23,10 @@ public final class Picture {
     private int width, height;           // width and height
 
     public Picture(byte[] bytesImage) {
-        image = byteToBufferedImageIMG(bytesImage);
+        ConvertImg conv = new ConvertImg();
+        image = conv.apply(bytesImage);
+        System.out.println("IMG:" + image);
+
         if(image != null){
             this.width  = image.getWidth();
             this.height = image.getHeight();
@@ -63,45 +56,6 @@ public final class Picture {
         this.width  = width;
         this.height = height;
         image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-    }
-
-
-    // convert byte[] back to a BufferedImage
-    public BufferedImage byteToBufferedImageIMG(byte[] bytes) {
-        BufferedImage newBi = null;
-        try{
-            InputStream is = new ByteArrayInputStream(bytes);
-            newBi = ImageIO.read(is);
-        }catch(IOException e){
-            e.printStackTrace();
-        }
-        return newBi;
-    }
-
-    // convert byte[] back to a BufferedImage
-    public BufferedImage byteToBufferedImage(byte[] bytes) {
-        BufferedImage newBi = null;
-        newBi = createCopyUsingByteBuffer(500, 500, bytes);
-        return newBi;
-    }
-
-    /**
-     * https://stackoverflow.com/questions/42841566/pixel-data-of-a-16-bit-dicom-image-to-bufferedimage
-     */
-    private static BufferedImage createCopyUsingByteBuffer(int w, int h, byte[] rawBytes) {
-        short[] rawShorts = new short[rawBytes.length / 2];
-
-        ByteBuffer.wrap(rawBytes)
-                // .order(ByteOrder.LITTLE_ENDIAN) // Depending on the data's endianness
-                .asShortBuffer()
-                .get(rawShorts);
-
-        DataBuffer dataBuffer = new DataBufferUShort(rawShorts, rawShorts.length);
-        int stride = 1;
-        WritableRaster raster = Raster.createInterleavedRaster(dataBuffer, w, h, w * stride, stride, new int[] {0}, null);
-        ColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false, false, Transparency.OPAQUE, DataBuffer.TYPE_USHORT);
-
-        return new BufferedImage(colorModel, raster, colorModel.isAlphaPremultiplied(), null);
     }
 
     /**
@@ -196,18 +150,13 @@ public final class Picture {
         else                   image.setRGB(col, height - row - 1, rgb);
     }
 
-    public void display(/*BufferedImage newBi*/){
-        // add a text on top on the image, optional, just for fun
-        Graphics2D g = image.createGraphics();
-        // g.setFont(new Font("TimesRoman", Font.BOLD, 30));
-        // g.setColor(Color.BLACK);
-        // g.drawString("Hello World", 100, 100);
-        // g.drawImage(image, 0, 0, null);
-        // g.dispose();
-
+    public void display(){
+        /*\/ exibir imagem em painel gráfico; */
         GUIPanel guip = new GUIPanel();
-        guip.setImage(image);
-        guip.display(g);
+        if(image != null){
+            guip.setImage(image);
+            guip.display();
+        }
     }
 
     public void toFile(BufferedImage newBi, String nameFile, String extFile){

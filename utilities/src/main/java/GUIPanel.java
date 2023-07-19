@@ -16,38 +16,35 @@ import jimagobject.utilities.ReadImages;
 
 public final class GUIPanel {
 
-    private Graphics2D g2d;
     private BufferedImage image;
-
-    // public GUIPanel(Graphics2D g2d){
-    //     this.g2d = g2d;
-    // }
-
-    // public void display() {
-    //     display(this.g2d);
-    // }
+    private String title = "";
 
     public void setImage(BufferedImage image) {
         this.image = image;
     }
 
-    public void display(Graphics2D g2d) {
-        this.g2d = g2d;
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public void display() {
+        int size = 800;
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
-                JFrame frame = new JFrame();
-                frame.add(new TestPane());
+                JFrame frame = new JFrame(title);
+                frame.add(new ImgPanel());
                 frame.pack();
                 frame.setLocationRelativeTo(null);
+                frame.setSize(size, size);
                 frame.setVisible(true);
             }
         });
     }
 
-    public class TestPane extends JPanel {
+    public class ImgPanel extends JPanel {
 
-        public TestPane() {
+        public ImgPanel() {
             setBackground(Color.BLACK);
         }
 
@@ -59,11 +56,8 @@ public final class GUIPanel {
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
-            // Graphics2D g2d = (Graphics2D) g.create();
-            // g2d.setPaint(Color.WHITE);
-            // g2d.drawLine(500, 500, 500, 800);
-            g2d.drawImage(image, 0, 0, this);
-            g2d.dispose();
+            g.drawImage(image, 0, 0, this);
+            g.dispose();
         }
 
     }

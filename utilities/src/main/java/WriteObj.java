@@ -32,55 +32,21 @@ public final class WriteObj {
     public void getVertex() {
         ReadImages read = new ReadImages();
         // read.read(new File("/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004"));
-        // read.read(new File("/home/icaro/Downloads/dicom/teste/teste2"));
-        read.read(new File("/home/icaro/Downloads/dicom/teste/teste3"));
+        read.read(new File("/home/icaro/Downloads/dicom/teste/teste2"));
+        // read.read(new File("/home/icaro/Downloads/dicom/teste/teste3"));
         Vector<byte[]> vbytesImages = read.getVbytesImages();
 
-        long rows = read.getRows();
-        long columns = read.getColumns();
-        double sliceThickness = read.getSliceThickness();
+        // long rows = read.getRows();
+        // long columns = read.getColumns();
+        // double sliceThickness = read.getSliceThickness();
 
 
-        String fObj = "teste.obj";
-        File logCheck = new File(fObj);
-        FileWriter myWriter = null;
-        try {
-            myWriter = new FileWriter(fObj, false);
-        } catch (IOException e) { e.printStackTrace(); }
+        // write(vbytesImages);
 
-        // /** \/ aplicação do edge detection; */
-        int z = 0;
 
-        double spaceBetweenLayers = 0.005;
-        double xCoordScale = 0.01;
-        double yCoordScale = 0.01;
-        EdgeDetector edge = new EdgeDetector();
-        for(byte[] pixels : vbytesImages){
-            Picture picEdgeDetect = edge.apply(pixels);
-            for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
-                for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
 
-                    Color cor = picEdgeDetect.get(x, y);
-                    int argb = picEdgeDetect.getRGB(x, y);
-                    int alpha =  (argb >> 24) & 0xFF;
-                    if (alpha == 255 && cor.equals(Color.black) ){
-                        // x y z;
-                        if(myWriter != null){
-                            try {
-                                myWriter.write("v " + (x) + " " + (y) + " " + z + "\n");
-                            } catch (IOException e) { e.printStackTrace(); }
-                        }
-                    }
-                }
-            }
-            z += 1;
-        }
-        try {
-            myWriter.close();
-        } catch (IOException e) { e.printStackTrace(); }
-
-        // Picture pic = new Picture(vbytesImages.get(0));
-        // pic.display();
+        Picture pic = new Picture(vbytesImages.get(0));
+        pic.display();
 
         // /**\/ testes de leitura de imagens; */
         // try{
@@ -126,6 +92,53 @@ public final class WriteObj {
         //     myWriter.close();
         // } catch (IOException e) { e.printStackTrace(); }
 
+        // File ima = new File("/home/icaro/Downloads/dicom/teste/teste2/WILLIANE_VITORIA_FONSECA_SILVA.CT.ABDOMEN_ABD_TRI_FASICO_MANUAL_(ADULT).0004.0001.2020.01.22.11.18.07.32196.464565879.IMA");
+        // Picture pic = new Picture(ima);
+
+    }
+
+    public void write(Vector<byte[]> vbytesImages) {
+        String fObj = "teste.obj";
+        File logCheck = new File(fObj);
+        FileWriter myWriter = null;
+        try {
+            myWriter = new FileWriter(fObj, false);
+        } catch (IOException e) { e.printStackTrace(); }
+
+        applyDimensionsImg(vbytesImages, myWriter);
+
+        try {
+            myWriter.close();
+        } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    public void applyDimensionsImg(Vector<byte[]> vbytesImages, FileWriter myWriter){
+        int z = 0;
+        double spaceBetweenLayers = 0.005;
+        double xCoordScale = 0.01;
+        double yCoordScale = 0.01;
+        EdgeDetector edge = new EdgeDetector();
+        for(byte[] pixels : vbytesImages){
+            /** \/ aplicação do edge detection; */
+            Picture picEdgeDetect = edge.apply(pixels);
+            for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
+                for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
+
+                    Color cor = picEdgeDetect.get(x, y);
+                    int argb = picEdgeDetect.getRGB(x, y);
+                    int alpha =  (argb >> 24) & 0xFF;
+                    if (alpha == 255 && cor.equals(Color.black) ){
+                        // x y z;
+                        if(myWriter != null){
+                            try {
+                                myWriter.write("v " + (x) + " " + (y) + " " + z + "\n");
+                            } catch (IOException e) { e.printStackTrace(); }
+                        }
+                    }
+                }
+            }
+            z += 1;
+        }
     }
 
 }
