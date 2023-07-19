@@ -32,8 +32,8 @@ public final class WriteObj {
     public void getVertex() {
         ReadImages read = new ReadImages();
         // read.read(new File("/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004"));
-        read.read(new File("/home/icaro/Downloads/dicom/teste/teste2"));
-        // read.read(new File("/home/icaro/Downloads/dicom/teste/teste3"));
+        // read.read(new File("/home/icaro/Downloads/dicom/teste/teste2"));
+        read.read(new File("/home/icaro/Downloads/dicom/teste/teste3"));
         Vector<byte[]> vbytesImages = read.getVbytesImages();
 
         // long rows = read.getRows();

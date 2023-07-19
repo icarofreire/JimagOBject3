@@ -58,6 +58,10 @@ public final class Picture {
         image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
     }
 
+    public BufferedImage getImage() {
+        return image;
+    }
+
     /**
      * Returns the height of the picture.
      *

@@ -13,14 +13,31 @@ import javax.swing.JPanel;
 import java.awt.image.BufferedImage;
 
 import jimagobject.utilities.ReadImages;
+import jimagobject.utilities.EdgeDetector;
 
 public final class GUIPanel {
 
     private BufferedImage image;
-    private String title = "";
+    private BufferedImage imageEdgeDetect;
+    private String title = "Imagem com edge detection";
+    private final EdgeDetector edge = new EdgeDetector();
+    private int width = 1080; // << default;
+    private int height = 700; // << default;
+    private final int esp = 10;
 
     public void setImage(BufferedImage image) {
         this.image = image;
+        /** \/ aplicação do edge detection; */
+        this.imageEdgeDetect = edge.apply(image).getImage();
+
+        /**
+         * painel:
+         * --------------------------------
+         * |   img1     |esp|    img2   |
+         * |            |   |           |
+         * --------------------------------
+         */
+        width = (image.getWidth()+esp) + ((imageEdgeDetect != null) ? (imageEdgeDetect.getWidth()) : (0));
     }
 
     public void setTitle(String title) {
@@ -28,7 +45,6 @@ public final class GUIPanel {
     }
 
     public void display() {
-        int size = 800;
         EventQueue.invokeLater(new Runnable() {
             @Override
             public void run() {
@@ -36,7 +52,7 @@ public final class GUIPanel {
                 frame.add(new ImgPanel());
                 frame.pack();
                 frame.setLocationRelativeTo(null);
-                frame.setSize(size, size);
+                frame.setSize(width, height);
                 frame.setVisible(true);
             }
         });
@@ -50,14 +66,17 @@ public final class GUIPanel {
 
         @Override
         public Dimension getPreferredSize() {
-            return new Dimension(1080, 1920);
+            return new Dimension(width, height);
         }
 
         @Override
         protected void paintComponent(Graphics g) {
             super.paintComponent(g);
             g.drawImage(image, 0, 0, this);
-            g.dispose();
+            if(imageEdgeDetect != null){
+                g.drawImage(imageEdgeDetect, image.getWidth()+esp, 0, this);
+            }
+            // g.dispose();
         }
 
     }

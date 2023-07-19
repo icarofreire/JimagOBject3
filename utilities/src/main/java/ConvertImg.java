@@ -47,8 +47,8 @@ public final class ConvertImg {
 
     public BufferedImage apply(byte[] bytesImage) {
         BufferedImage image = null;
-        // image = byteToBufferedImageIMG(bytesImage);
-        image = byteToBufferedImage(bytesImage);
+        image = byteToBufferedImageIMG(bytesImage);
+        // image = byteToBufferedImage(bytesImage);
 
         // byte[] encode = Base64.getEncoder().encode(bytesImage);
         // String result = new String(encode);
