@@ -18,15 +18,22 @@ import jimagobject.utilities.ConvertImg;
  */
 public final class Picture {
 
+    private final ConvertImg conv = new ConvertImg();
     private BufferedImage image;
     private boolean isOriginUpperLeft = true;  // location of origin
     private int width, height;           // width and height
 
-    public Picture(byte[] bytesImage) {
-        ConvertImg conv = new ConvertImg();
-        image = conv.apply(bytesImage);
-        System.out.println("IMG:" + image);
 
+    public Picture(byte[] bytesImage, int width, int height) {
+        image = conv.apply(bytesImage, width, height);
+        if(image != null){
+            this.width  = image.getWidth();
+            this.height = image.getHeight();
+        }
+    }
+
+    public Picture(byte[] bytesImage) {
+        image = conv.byteToBufferedImageIMG(bytesImage);
         if(image != null){
             this.width  = image.getWidth();
             this.height = image.getHeight();

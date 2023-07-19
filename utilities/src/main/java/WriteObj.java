@@ -29,43 +29,20 @@ import java.nio.file.Paths;
 
 public final class WriteObj {
 
+    private final ReadImages read = new ReadImages();
+
     public void getVertex() {
-        ReadImages read = new ReadImages();
         // read.read(new File("/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004"));
-        // read.read(new File("/home/icaro/Downloads/dicom/teste/teste2"));
-        read.read(new File("/home/icaro/Downloads/dicom/teste/teste3"));
+        read.read(new File("/home/icaro/Downloads/dicom/teste/teste2"));
+        // read.read(new File("/home/icaro/Downloads/dicom/teste/teste3"));
         Vector<byte[]> vbytesImages = read.getVbytesImages();
 
-        // long rows = read.getRows();
-        // long columns = read.getColumns();
-        // double sliceThickness = read.getSliceThickness();
+        testeInstanciaDICOM(vbytesImages);
 
 
-        // write(vbytesImages);
-
-
-
-        Picture pic = new Picture(vbytesImages.get(0));
-        pic.display();
-
-        // /**\/ testes de leitura de imagens; */
-        // try{
-        //     Path source = Paths.get("/home/icaro/Imagens/galen.jpg");
-        //     BufferedImage bi = ImageIO.read(source.toFile());
-        //     // convert BufferedImage to byte[]
-        //     // ByteArrayOutputStream baos = new ByteArrayOutputStream();
-        //     // ImageIO.write(bi, "jpg", baos);
-        //     // byte[] bytes = baos.toByteArray();
-
-        //     Picture pic = new Picture(bi);
-        //     pic.display();
-        // }catch(IOException e){
-        //     e.printStackTrace();
-        // }
-
+        /**\/ testes antigos; */
         // double z = 0.0;
         // for(byte[] pixels : vbytesImages){
-
         //     int conr = 0;
         //     int y = 0;
         //     int x = -1;
@@ -92,9 +69,18 @@ public final class WriteObj {
         //     myWriter.close();
         // } catch (IOException e) { e.printStackTrace(); }
 
-        // File ima = new File("/home/icaro/Downloads/dicom/teste/teste2/WILLIANE_VITORIA_FONSECA_SILVA.CT.ABDOMEN_ABD_TRI_FASICO_MANUAL_(ADULT).0004.0001.2020.01.22.11.18.07.32196.464565879.IMA");
-        // Picture pic = new Picture(ima);
+    }
 
+    /** teste em exibir uma instância de imagem dicom convertendo para
+     * imagem e aplicando o edge;
+     */
+    public void testeInstanciaDICOM(Vector<byte[]> vbytesImages){
+        int instance = 0;
+        Vector<int[]> rowsColumns = read.getVRowsColumnsImages();
+        int rows = rowsColumns.get(instance)[0];
+        int columns = rowsColumns.get(instance)[1];
+        Picture pic = new Picture(vbytesImages.get(instance), columns, rows);
+        pic.display();
     }
 
     public void write(Vector<byte[]> vbytesImages) {
@@ -117,6 +103,7 @@ public final class WriteObj {
         double spaceBetweenLayers = 0.005;
         double xCoordScale = 0.01;
         double yCoordScale = 0.01;
+        double sliceThickness = read.getSliceThickness();
         EdgeDetector edge = new EdgeDetector();
         for(byte[] pixels : vbytesImages){
             /** \/ aplicação do edge detection; */

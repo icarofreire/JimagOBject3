@@ -25,9 +25,10 @@ public final class ReadImages {
 
     private final HashMap<Long, byte[]> instanceNumberFileBytes = new HashMap<Long, byte[]>();
     private final Vector<byte[]> vbytesImages = new Vector<byte[]>();
+    private final Vector<int[]> vRowsColumnsImages = new Vector<int[]>();
     private final TreeMap<Long, byte[]> treeMapInstanceNumberFileBytes = new TreeMap<>();
     private final HashMap<String, byte[]> imagePixelData = new HashMap<String, byte[]>();
-    private final String extFile = ".jpg";
+    private final String extFile = ".ima";
 
     // (0018,0050) Slice Thickness;
     private String sliceThickness = null;
@@ -55,6 +56,10 @@ public final class ReadImages {
                         if(imagePixelData.containsKey(img.getName())){
                             instanceNumberFileBytes.put(Long.parseLong(instanceNumber),
                             imagePixelData.get(img.getName()));
+
+                            if(rows != null && columns != null){
+                                vRowsColumnsImages.add(new int[]{Integer.parseInt(rows), Integer.parseInt(columns)});
+                            }
                         }
                     }else{
                         /** não dicom; */
@@ -77,12 +82,8 @@ public final class ReadImages {
         return vbytesImages;
     }
 
-    public long getRows() {
-        return Long.parseLong(rows);
-    }
-    
-    public long getColumns() {
-        return Long.parseLong(columns);
+    public Vector<int[]> getVRowsColumnsImages(){
+        return vRowsColumnsImages;
     }
 
     public double getSliceThickness() {
@@ -96,7 +97,7 @@ public final class ReadImages {
     public void readSortedDicoms() {
         System.out.println("images:");
         for (Map.Entry<Long, byte[]> entry : treeMapInstanceNumberFileBytes.entrySet()){
-            System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue()); 
+            System.out.println("Key = " + entry.getKey() + ", Value = " + entry.getValue());
             byte[] bytes = entry.getValue();
             vbytesImages.add(bytes);
         }

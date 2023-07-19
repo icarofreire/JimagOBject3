@@ -13,30 +13,17 @@ import java.awt.image.ComponentColorModel;
 import java.awt.Transparency;
 import java.awt.color.ColorSpace;
 
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import javax.imageio.ImageIO;
-import java.io.ByteArrayOutputStream;
-import java.util.Iterator;
-import javax.imageio.ImageReader;
-import javax.imageio.stream.ImageInputStream;
-import java.io.OutputStream;
-import java.io.BufferedOutputStream;
-import javax.imageio.ImageReadParam;
-import java.awt.Image;
-import java.io.File;
 import java.awt.image.WritableRaster;
-// import java.nio.IntBuffer;
 import java.nio.ByteOrder;
 import java.awt.image.DataBufferByte;
 import java.awt.image.ColorModel;
 import java.awt.image.ComponentSampleModel;
 import java.awt.image.SampleModel;
-import java.awt.Graphics2D;
-// import java.util.Base64;
 
 // import jimagobject.utilities.ReadImages;
 
@@ -45,38 +32,24 @@ import java.awt.Graphics2D;
  */
 public final class ConvertImg {
 
-    public BufferedImage apply(byte[] bytesImage) {
+    public BufferedImage apply(byte[] bytesImage, int width, int height) {
         BufferedImage image = null;
-        image = byteToBufferedImageIMG(bytesImage);
-        // image = byteToBufferedImage(bytesImage);
 
-        // byte[] encode = Base64.getEncoder().encode(bytesImage);
-        // String result = new String(encode);
-        // System.out.println(result);
-
-        // image = createNoCopy(500, 500, bytesImage);
-        // int m = 50000;
-        // image = createRGBImage(bytesImage, 500, 500);
-
-        //  IntBuffer intBuf =
-        // ByteBuffer.wrap(bytesImage)
-        //     .order(ByteOrder.BIG_ENDIAN)
-        //     .asIntBuffer();
-        // int[] array = new int[intBuf.remaining()];
-        // intBuf.get(array);
-
-        // image = getImageFromArray(array, 50000, 50000);
+        // image = byteToBufferedImageIMG(bytesImage);
+        // image = byteToBufferedImage(bytesImage, width, height);
+        // image = createNoCopy(width, height, bytesImage);
+        // image = createRGBImage(bytesImage, width, height);
 
         // System.out.println("IMG:" + image);
         return image;
     }
 
+    /**[Apenas para formato de imagens não DICOM]; */
     // convert byte[] back to a BufferedImage
     public BufferedImage byteToBufferedImageIMG(byte[] bytes) {
         BufferedImage newBi = null;
         try{
             InputStream is = new ByteArrayInputStream(bytes);
-            System.out.println("is::" + is);
             newBi = ImageIO.read(is);
         }catch(IOException e){
             e.printStackTrace();
@@ -84,10 +57,11 @@ public final class ConvertImg {
         return newBi;
     }
 
+    /**[OK]; */
     // convert byte[] back to a BufferedImage
-    public BufferedImage byteToBufferedImage(byte[] bytes) {
+    public BufferedImage byteToBufferedImage(byte[] bytes, int w, int h) {
         BufferedImage newBi = null;
-        newBi = createCopyUsingByteBuffer(5000, 5000, bytes);
+        newBi = createCopyUsingByteBuffer(w, h, bytes);
         return newBi;
     }
 
@@ -110,12 +84,14 @@ public final class ConvertImg {
         return new BufferedImage(colorModel, raster, colorModel.isAlphaPremultiplied(), null);
     }
 
-    private BufferedImage createRGBImage(byte[] bytes, int width, int height) {
-        DataBufferByte buffer = new DataBufferByte(bytes, bytes.length);
-        ColorModel cm = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[]{8, 8, 8}, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
-        return new BufferedImage(cm, Raster.createInterleavedRaster(buffer, width, height, width * 3, 3, new int[]{0, 1, 2}, null), false, null);
-    }
+    /**[TESTAR MAIS]; */
+    // private BufferedImage createRGBImage(byte[] bytes, int width, int height) {
+    //     DataBufferByte buffer = new DataBufferByte(bytes, bytes.length);
+    //     ColorModel cm = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), new int[]{8, 8, 8}, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+    //     return new BufferedImage(cm, Raster.createInterleavedRaster(buffer, width, height, width * 3, 3, new int[]{0, 1, 2}, null), false, null);
+    // }
 
+    /**[OK]; */
     private BufferedImage createNoCopy(int w, int h, byte[] rawBytes) {
         DataBuffer dataBuffer = new DataBufferByte(rawBytes, rawBytes.length);
 
@@ -160,77 +136,6 @@ public final class ConvertImg {
 
             return sdata;
         }
-    }
-
-    public BufferedImage Dicom2MemJPEG(File dcmFile, int scaleHeight){
-        //File myDicomFile = new File("c:/dicomImage.dcm");
-        BufferedImage myJpegImage = null;
-        
-        // returns an Iterator containing all currently registered ImageReaders 
-        // that claim to be able to decode the named format 
-        // (e.g., "DICOM", "jpeg", "tiff")
-        Iterator iter = ImageIO.getImageReadersByFormatName("DICOM");  
-        ImageReader reader = (ImageReader) iter.next();
-        // DicomImageReadParam param = (DicomImageReadParam) reader.getDefaultReadParam();
-        ImageReadParam param = reader.getDefaultReadParam();
-        
-        try {
-            ImageInputStream iis = ImageIO.createImageInputStream(dcmFile);
-            reader.setInput(iis, false); 
-            myJpegImage = reader.read(0, param); 
-            iis.close();
-
-            if (myJpegImage == null) {
-                System.out.println("\nError: couldn't read dicom image!");
-                return null;
-            }
-            
-
-            // Resize Image -> Thumbnails....
-            if (scaleHeight > 0){
-                if (scaleHeight < 24) 
-                    scaleHeight = 24; // minimum
-                myJpegImage = getScaledImageWithHeight(myJpegImage, scaleHeight);           
-            }
-                    
-            //OutputStream output = new BufferedOutputStream(new FileOutputStream(jpgFile));
-            ByteArrayOutputStream jpgArray = new ByteArrayOutputStream();
-            OutputStream output = new BufferedOutputStream(jpgArray); 
-            
-            //JPEGImageEncoder encoder = JPEGCodec.createJPEGEncoder(output);
-            //encoder.encode(myJpegImage);
-            output.close();             // Has no effect to ByteArrayOutputStream
-            
-            // return jpgArray;
-            return myJpegImage;
-        } 
-        catch(IOException e) {
-            System.out.println("\nError: couldn't read dicom image!"+ e.getMessage());
-            return null;
-        }
-        catch(Exception e) {
-            System.out.println("\nError: "+ e.getMessage());
-            return null;
-        }
-    }
-
-    /**A method that scales a Buffered image and takes the required height as a refference point**/
-    public static BufferedImage getScaledImageWithHeight(BufferedImage image, int height) throws java.lang.Exception {
-        int width = (int) (((float) image.getWidth() / (float) image.getHeight()) * height);
-
-        Image scaledImage = image.getScaledInstance(width, height, BufferedImage.SCALE_SMOOTH);
-        BufferedImage outImage = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
-        Graphics2D g2 = (Graphics2D) outImage.createGraphics();
-        g2.drawImage(scaledImage, 0, 0, null);
-
-        return outImage;
-    }
-
-    public BufferedImage getImageFromArray(int[] pixels, int width, int height) {
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        WritableRaster raster = (WritableRaster) image.getData();
-        raster.setPixels(0,0,width,height,pixels);
-        return image;
     }
 
 }
