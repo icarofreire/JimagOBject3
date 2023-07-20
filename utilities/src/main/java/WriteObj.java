@@ -32,42 +32,23 @@ public final class WriteObj {
     private final ReadImages read = new ReadImages();
 
     public void getVertex() {
-        // read.read(new File("/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004"));
-        read.read(new File("/home/icaro/Downloads/dicom/teste/teste2"));
-        // read.read(new File("/home/icaro/Downloads/dicom/teste/teste3"));
-        Vector<byte[]> vbytesImages = read.getVbytesImages();
 
-        testeInstanciaDICOM(vbytesImages);
+        // String dirImages = "/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004";
+        String dirImages = "/home/icaro/Downloads/dicom/teste/teste2";
+        // String dirImages = "/home/icaro/Downloads/dicom/teste/teste3";
 
+        File dir = new File(dirImages);
+        if(dir.exists()){
+            // read.read(dir);
+            read.read(dir);
+            // read.read(dir);
+            Vector<byte[]> vbytesImages = read.getVbytesImages();
 
-        /**\/ testes antigos; */
-        // double z = 0.0;
-        // for(byte[] pixels : vbytesImages){
-        //     int conr = 0;
-        //     int y = 0;
-        //     int x = -1;
-        //     for(int i=0; i<pixels.length; i+=3){
-        //         conr++;
-        //         x++;
+            testeInstanciaDICOM(vbytesImages);
 
-        //         if(conr >= columns){
-        //             y++;
-        //             x = 0;
-        //             conr=0;
-        //         }
-
-        //         // x y z;
-        //         if(myWriter != null){
-        //             try {
-        //                 myWriter.write("v " + x + " " + y + " " + z + "\n");
-        //             } catch (IOException e) { e.printStackTrace(); }
-        //         }   
-        //     }
-        //     z += 1;
-        // }
-        // try {
-        //     myWriter.close();
-        // } catch (IOException e) { e.printStackTrace(); }
+        }else{
+            System.out.println("Diretório de imagens não existe;");
+        }
 
     }
 
@@ -124,7 +105,7 @@ public final class WriteObj {
                     }
                 }
             }
-            z += 1;
+            z += 1; // sliceThickness
         }
     }
 

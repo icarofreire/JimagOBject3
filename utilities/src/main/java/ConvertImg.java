@@ -46,6 +46,13 @@ public final class ConvertImg {
 
     /**[Apenas para formato de imagens não DICOM]; */
     // convert byte[] back to a BufferedImage
+    /**
+     * Java 2D supports loading these external image formats into its BufferedImage
+     * format using its Image I/O API which is in the javax.imageio package.
+     * Image I/O has built-in support for GIF, PNG, JPEG, BMP, and WBMP.
+     * 
+     * https://docs.oracle.com/javase/tutorial/2d/images/loadimage.html
+     */
     public BufferedImage byteToBufferedImageIMG(byte[] bytes) {
         BufferedImage newBi = null;
         try{
@@ -96,7 +103,7 @@ public final class ConvertImg {
         DataBuffer dataBuffer = new DataBufferByte(rawBytes, rawBytes.length);
 
         int stride = 2;
-        SampleModel sampleModel = new MyComponentSampleModel(w, h, stride);
+        SampleModel sampleModel = new MyComponentSampleModel(w, h, stride, true);
         WritableRaster raster = Raster.createWritableRaster(sampleModel, dataBuffer, null);
 
         ColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false, false, Transparency.OPAQUE, DataBuffer.TYPE_USHORT);
@@ -105,8 +112,11 @@ public final class ConvertImg {
     }
 
     private class MyComponentSampleModel extends ComponentSampleModel {
-        public MyComponentSampleModel(int w, int h, int stride) {
+        private boolean littleEndian = false;
+
+        public MyComponentSampleModel(int w, int h, int stride, boolean littleEndian) {
             super(DataBuffer.TYPE_USHORT, w, h, stride, w * stride, new int[] {0});
+            this.littleEndian = littleEndian;
         }
 
         @Override
@@ -131,7 +141,9 @@ public final class ConvertImg {
             for (int i = 0; i < numDataElems; i++) {
                 sdata[i] = (short) (data.getElem(0, pixelOffset) << 8 | data.getElem(0, pixelOffset + 1));
                 // If little endian, swap the element order, like this:
-            //    sdata[i] = (short) (data.getElem(0, pixelOffset + 1) << 8 | data.getElem(0, pixelOffset));
+                if(littleEndian){
+                    sdata[i] = (short) (data.getElem(0, pixelOffset + 1) << 8 | data.getElem(0, pixelOffset));
+                }
             }
 
             return sdata;
