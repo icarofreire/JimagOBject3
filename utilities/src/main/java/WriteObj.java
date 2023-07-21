@@ -29,23 +29,27 @@ import java.nio.file.Paths;
 
 public final class WriteObj {
 
+    private final String fObj = "teste.obj";
+    private Vector<byte[]> vbytesImages;
+    private Vector<int[]> vRowsColumnsImages;
     private final ReadImages read = new ReadImages();
 
     public void getVertex() {
 
         // String dirImages = "/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004";
-        String dirImages = "/home/icaro/Downloads/dicom/teste/teste2";
-        // String dirImages = "/home/icaro/Downloads/dicom/teste/teste3";
+        // String dirImages = "/home/icaro/Downloads/dicom/teste/teste2";
+        String dirImages = "/home/icaro/Downloads/dicom/teste/teste3";
 
         File dir = new File(dirImages);
         if(dir.exists()){
-            // read.read(dir);
             read.read(dir);
-            // read.read(dir);
-            Vector<byte[]> vbytesImages = read.getVbytesImages();
+            vbytesImages = read.getVbytesImages();
+            // vRowsColumnsImages = read.getVRowsColumnsImages();
 
-            testeInstanciaDICOM(vbytesImages);
+            // write();
 
+            /**\/ painel de exibição da conversão da imagem; */
+            testeInstanciaDICOM();
         }else{
             System.out.println("Diretório de imagens não existe;");
         }
@@ -55,40 +59,46 @@ public final class WriteObj {
     /** teste em exibir uma instância de imagem dicom convertendo para
      * imagem e aplicando o edge;
      */
-    public void testeInstanciaDICOM(Vector<byte[]> vbytesImages){
+    public void testeInstanciaDICOM(){
         int instance = 0;
         Vector<int[]> rowsColumns = read.getVRowsColumnsImages();
+        boolean imagesPadroes = read.getImgPadrao();
         int rows = rowsColumns.get(instance)[0];
         int columns = rowsColumns.get(instance)[1];
-        Picture pic = new Picture(vbytesImages.get(instance), columns, rows);
+        Picture pic = new Picture(vbytesImages.get(instance), columns, rows, imagesPadroes);
         pic.display();
     }
 
-    public void write(Vector<byte[]> vbytesImages) {
-        String fObj = "teste.obj";
+    /**\/ transcreve coordenadas de imagens para arquivo objeto; */
+    public void write() {
         File logCheck = new File(fObj);
         FileWriter myWriter = null;
         try {
             myWriter = new FileWriter(fObj, false);
         } catch (IOException e) { e.printStackTrace(); }
 
-        applyDimensionsImg(vbytesImages, myWriter);
+        applyDimensionsImg(myWriter);
 
         try {
             myWriter.close();
         } catch (IOException e) { e.printStackTrace(); }
     }
 
-    public void applyDimensionsImg(Vector<byte[]> vbytesImages, FileWriter myWriter){
+    public void applyDimensionsImg(FileWriter myWriter){
         int z = 0;
         double spaceBetweenLayers = 0.005;
         double xCoordScale = 0.01;
         double yCoordScale = 0.01;
         double sliceThickness = read.getSliceThickness();
+        vRowsColumnsImages = read.getVRowsColumnsImages();
+        boolean imagesPadroes = read.getImgPadrao();
         EdgeDetector edge = new EdgeDetector();
-        for(byte[] pixels : vbytesImages){
+        for(int i=0; i<vbytesImages.size(); i++){
+            byte[] pixels = vbytesImages.get(i);
             /** \/ aplicação do edge detection; */
-            Picture picEdgeDetect = edge.apply(pixels);
+            int rows = vRowsColumnsImages.get(i)[0];
+            int columns = vRowsColumnsImages.get(i)[1];
+            Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
             for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
                 for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
 

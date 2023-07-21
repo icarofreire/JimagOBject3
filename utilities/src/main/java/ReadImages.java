@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.HashMap;
 import java.util.TreeMap;
 import java.util.Map;
+import java.util.Arrays;
 import java.util.TreeSet;
 import java.util.Vector;
 import java.util.Collections;
@@ -28,7 +29,9 @@ public final class ReadImages {
     private final Vector<int[]> vRowsColumnsImages = new Vector<int[]>();
     private final TreeMap<Long, byte[]> treeMapInstanceNumberFileBytes = new TreeMap<>();
     private final HashMap<String, byte[]> imagePixelData = new HashMap<String, byte[]>();
-    private final String extFile = ".ima";
+    private final Vector<String> filesTypesDICOM = new Vector(Arrays.asList(".ima", ".dcm"));
+    private final Vector<String> filesTypesImgs = new Vector(Arrays.asList(".jpg", ".jpeg", ".png"));
+    private boolean imgPadrao = false;
 
     // (0018,0050) Slice Thickness;
     private String sliceThickness = null;
@@ -38,13 +41,22 @@ public final class ReadImages {
     // (0028,0011) Number of columns in the image;
     private String columns = null;
 
+    private boolean ifExt(String nameFile, Vector<String> filesTypes) {
+        boolean f = false;
+        for(String ext: filesTypes){
+            if(nameFile.toLowerCase().indexOf(ext.toLowerCase()) != -1){
+                f = true; break;
+            }
+        }
+        return f;
+    }
+
     public void read(File dirImages) {
         if(dirImages.exists()){
             File[] files = dirImages.listFiles();
             long index = 0;
             for(File img: files){
-                index++;
-                if(img.getName().indexOf(extFile) != -1 || img.getName().indexOf(extFile.toUpperCase()) != -1){
+                if(ifExt(img.getName(), filesTypesDICOM)){
                     LinkedHashMap<Integer, String[]> atributesDicom = parseDicom(img);
                     if(atributesDicom != null){
                         String instanceNumber = (atributesDicom.containsKey((0x0020 << 16 | 0x0013))) ? (atributesDicom.get((0x0020 << 16 | 0x0013))[1]) : (null);
@@ -61,16 +73,18 @@ public final class ReadImages {
                                 vRowsColumnsImages.add(new int[]{Integer.parseInt(rows), Integer.parseInt(columns)});
                             }
                         }
-                    }else{
-                        /** não dicom; */
-                        try{
-                            instanceNumberFileBytes.put(index, Files.readAllBytes(img.toPath()));
-                            /*\/ dados dedutivos para fins de teste; */
-                            rows = "500";
-                            columns = "500";
-                            sliceThickness = "0.5";
-                        }catch(IOException e){}
                     }
+                }else if(ifExt(img.getName(), filesTypesImgs)){
+                    imgPadrao = true;
+                    /**\/ não dicom; */
+                    try{
+                        instanceNumberFileBytes.put(index++, Files.readAllBytes(img.toPath()));
+                        /*\/ dados dedutivos para fins de teste; */
+                        // rows = "500";
+                        // columns = "500";
+                        sliceThickness = "0.5";
+                        vRowsColumnsImages.add(new int[]{500, 500});
+                    }catch(IOException e){}
                 }
             }
             hashSetToTreeMap();
@@ -88,6 +102,10 @@ public final class ReadImages {
 
     public double getSliceThickness() {
         return Double.parseDouble(sliceThickness);
+    }
+
+    public boolean getImgPadrao() {
+        return imgPadrao;
     }
 
     public void hashSetToTreeMap() {

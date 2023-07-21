@@ -24,16 +24,8 @@ public final class Picture {
     private int width, height;           // width and height
 
 
-    public Picture(byte[] bytesImage, int width, int height) {
-        image = conv.apply(bytesImage, width, height);
-        if(image != null){
-            this.width  = image.getWidth();
-            this.height = image.getHeight();
-        }
-    }
-
-    public Picture(byte[] bytesImage) {
-        image = conv.byteToBufferedImageIMG(bytesImage);
+    public Picture(byte[] bytesImage, int width, int height, boolean imagesPadroes) {
+        image = conv.apply(bytesImage, width, height, imagesPadroes);
         if(image != null){
             this.width  = image.getWidth();
             this.height = image.getHeight();

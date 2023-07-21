@@ -90,7 +90,7 @@ public final class EdgeDetector {
         return picture1;
     }
 
-    public Picture apply(byte[] bytesImage) {
+    public Picture apply(byte[] bytesImage, int width, int height, boolean imagesPadroes) {
 
         int[][] filter1 = {
             { -1,  0,  1 },
@@ -108,9 +108,9 @@ public final class EdgeDetector {
          * Picture.java
          * https://algs4.cs.princeton.edu/code/edu/princeton/cs/algs4/Picture.java.html
          */
-        Picture picture0 = new Picture(bytesImage);
-        int width    = picture0.width();
-        int height   = picture0.height();
+        Picture picture0 = new Picture(bytesImage, width, height, imagesPadroes);
+        // int width    = picture0.width();
+        // int height   = picture0.height();
         Picture picture1 = new Picture(width, height);
 
 

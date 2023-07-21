@@ -32,13 +32,16 @@ import java.awt.image.SampleModel;
  */
 public final class ConvertImg {
 
-    public BufferedImage apply(byte[] bytesImage, int width, int height) {
+    public BufferedImage apply(byte[] bytesImage, int width, int height, boolean imagesPadroes) {
         BufferedImage image = null;
 
-        // image = byteToBufferedImageIMG(bytesImage);
-        // image = byteToBufferedImage(bytesImage, width, height);
-        // image = createNoCopy(width, height, bytesImage);
-        // image = createRGBImage(bytesImage, width, height);
+        if(imagesPadroes) {
+            image = byteToBufferedImageIMG(bytesImage);
+        }else{
+            image = byteToBufferedImage(bytesImage, width, height);
+            // image = createNoCopy(width, height, bytesImage);
+            // image = createRGBImage(bytesImage, width, height);
+        }
 
         // System.out.println("IMG:" + image);
         return image;
