@@ -19,6 +19,8 @@ import java.io.InputStream;
 
 import jimagobject.utilities.ReadImages;
 import jimagobject.utilities.Picture;
+import jimagobject.utilities.Marching.MarchingCubes;
+import jimagobject.utilities.Marching.Vertex;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -33,12 +35,13 @@ public final class WriteObj {
     private Vector<byte[]> vbytesImages;
     private Vector<int[]> vRowsColumnsImages;
     private final ReadImages read = new ReadImages();
+    private final MarchingCubes march = new MarchingCubes();
 
     public void getVertex() {
 
         // String dirImages = "/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004";
-        // String dirImages = "/home/icaro/Downloads/dicom/teste/teste2";
-        String dirImages = "/home/icaro/Downloads/dicom/teste/teste3";
+        String dirImages = "/home/icaro/Downloads/dicom/teste/teste2";
+        // String dirImages = "/home/icaro/Downloads/dicom/teste/teste3";
 
         File dir = new File(dirImages);
         if(dir.exists()){
@@ -46,10 +49,11 @@ public final class WriteObj {
             vbytesImages = read.getVbytesImages();
             // vRowsColumnsImages = read.getVRowsColumnsImages();
 
-            // write();
+            write();
+            // teste2();
 
             /**\/ painel de exibição da conversão da imagem; */
-            testeInstanciaDICOM();
+            // testeInstanciaDICOM();
         }else{
             System.out.println("Diretório de imagens não existe;");
         }
@@ -78,6 +82,8 @@ public final class WriteObj {
         } catch (IOException e) { e.printStackTrace(); }
 
         applyDimensionsImg(myWriter);
+        // teste2(myWriter);
+        // teste3(myWriter);
 
         try {
             myWriter.close();
@@ -116,6 +122,139 @@ public final class WriteObj {
                 }
             }
             z += 1; // sliceThickness
+
+            // teste4(pixels, myWriter);
+        }
+    }
+
+    public void teste2(FileWriter myWriter){
+        int z = 1;
+        double spaceBetweenLayers = 0.005;
+        double xCoordScale = 0.01;
+        double yCoordScale = 0.01;
+        double sliceThickness = read.getSliceThickness();
+        vRowsColumnsImages = read.getVRowsColumnsImages();
+        boolean imagesPadroes = read.getImgPadrao();
+        EdgeDetector edge = new EdgeDetector();
+
+        for(int i=0; i<vbytesImages.size(); i++){
+            byte[] pixels = vbytesImages.get(i);
+            /** \/ aplicação do edge detection; */
+            int rows = vRowsColumnsImages.get(i)[0];
+            int columns = vRowsColumnsImages.get(i)[1];
+            Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
+
+            int[][] allPoints = new int[picEdgeDetect.height()][picEdgeDetect.width()];
+
+            for (int y = 0; y < picEdgeDetect.height(); y++) {
+                for (int x = 0; x < picEdgeDetect.width(); x++) {
+                    allPoints[y][x] = picEdgeDetect.getRGB(x, y);
+                }
+            }
+
+            // march.calculatingFacets(allPoints,  myWriter);
+        }
+
+    }
+
+    public void teste3(FileWriter myWriter){
+        int z = 1;
+        double spaceBetweenLayers = 0.005;
+        double xCoordScale = 0.01;
+        double yCoordScale = 0.01;
+        double sliceThickness = read.getSliceThickness();
+        vRowsColumnsImages = read.getVRowsColumnsImages();
+        boolean imagesPadroes = read.getImgPadrao();
+        EdgeDetector edge = new EdgeDetector();
+
+
+        // byte[] pixels = vbytesImages.get(i);
+        // /** \/ aplicação do edge detection; */
+        // int rows = vRowsColumnsImages.get(i)[0];
+        // int columns = vRowsColumnsImages.get(i)[1];
+        // int[][] yxs = new int[picEdgeDetect.height()][picEdgeDetect.height()];
+        // Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
+        // for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
+        //     for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
+        //         // yxs[y][x] = 
+        //         Vertex vert = new Vertex(x, y, z);
+        //     }
+        // }
+
+        final int H = 1;
+        Vector<Vertex> vVert = new Vector<Vertex>();
+
+
+        int i=0;
+        // for(int i=0; i<vbytesImages.size(); i++)
+        {
+            byte[] pixels = vbytesImages.get(i);
+            /** \/ aplicação do edge detection; */
+            int rows = vRowsColumnsImages.get(i)[0];
+            int columns = vRowsColumnsImages.get(i)[1];
+            Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
+
+            // int[][] allPoints = new int[picEdgeDetect.height()][picEdgeDetect.width()];
+
+            for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
+                for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
+                    // allPoints[y][x] = picEdgeDetect.getRGB(x, y);
+                    Vertex vert = new Vertex(x, y, z);
+                    // vVert.add( new Vertex(x - H, y - H, z) );
+                    // vVert.add( new Vertex(x + H, y - H, z) );
+                    // vVert.add( new Vertex(x - H, y + H, z) );
+                    // vVert.add( new Vertex(x + H, y + H, z) );
+                    if(!vVert.contains(vert))
+                        vVert.add(vert);
+                    // if(myWriter != null){
+                    //     try {
+                    //         myWriter.write("f " + (x) + " " + (y) + " " + (z) + "\n");
+                    //         // myWriter.write("f " + (x + H) + " " + (y - H) + " " + (z) + "\n");
+                    //         // myWriter.write("f " + (x - H) + " " + (y + H) + " " + (z) + "\n");
+                    //         // myWriter.write("f " + (x + H) + " " + (y + H) + " " + (z) + "\n");
+                    //     } catch (IOException e) { e.printStackTrace(); }
+                    // }
+                }
+            }
+            z++;
+            march.calculatingFacets(vVert,  myWriter);
+        }
+
+        System.out.println(">>FIM;");
+    }
+
+    public int[] arrayBytesTArrayInt(byte[] gpixels){
+        java.nio.IntBuffer intBuf =
+        java.nio.ByteBuffer.wrap(gpixels)
+            .order(java.nio.ByteOrder.LITTLE_ENDIAN)
+            .asIntBuffer();
+        int[] arrayPixels = new int[intBuf.remaining()];
+        intBuf.get(arrayPixels);
+        return arrayPixels;
+    }
+
+    public void teste4(byte[] gpixels, FileWriter myWriter){
+        int z = 1;
+        int[] arrayPixels = arrayBytesTArrayInt(gpixels);
+
+        int[] size = {64, 64, 64};
+        float[] voxSize = {1.0f, 1.0f, 1.0f};
+        Vector<float[]> vmarch = march.marchingCubesInt(
+            arrayPixels,
+            new int[]{size[0], size[1], 2/*paddedSegmentSize*/},
+            size[2],
+            voxSize,
+            5,/*0.5*/
+            z
+        );
+        // int id = 15;
+        // System.out.println("march: " + vmarch.size() + " -> " +  vmarch.get(id).length + " : " + vmarch.get(id)[0] + " : " + vmarch.get(id)[1] + " : " + vmarch.get(id)[2] );
+        for(float[] v: vmarch){
+            if(myWriter != null){
+                try {
+                    myWriter.write("f " + (v[0]) + " " + (v[1]) + " " + (v[2]) + "\n");
+                } catch (IOException e) { e.printStackTrace(); }
+            }
         }
     }
 
