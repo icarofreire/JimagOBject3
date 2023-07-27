@@ -3,6 +3,7 @@
  */
 package jimagobject.utilities.Marching;
 
+import java.util.Vector;
 
 /**
  * ;
@@ -51,7 +52,8 @@ public final class VolumeGenerator {
     }
 
     public static int[] generateScalarFieldInt(int []size) {
-        final int[] scalarField = new int[size[0] * size[1] * size[2]];
+        System.out.println(">>>" + size[0] + "*" + size[1] + "*" + size[2] + " : " +(size[0] * size[1] * size[2]) );
+        final int[] scalarField = new int[(size[0] * size[1] * size[2])-10000];
         float axisMin = -10;
         float axisMax = 10;
         float axisRange = axisMax - axisMin;
@@ -64,6 +66,28 @@ public final class VolumeGenerator {
                     int y = (int) (axisMin + axisRange * j / (size[1] - 1));
                     int z = (int) (axisMin + axisRange * k / (size[2] - 1));
                     scalarField[k + size[1] * (j + size[2] * i)] = (int) (x * x + y * y - z * z - 25);
+                }
+            }
+        }
+
+        return scalarField;
+    }
+
+    public static Vector<Integer> generateScalarVolume(final int []size) {
+        float axisMin = -10;
+        float axisMax = 10;
+        float axisRange = axisMax - axisMin;
+
+        Vector<Integer> scalarField = new Vector<Integer>();
+
+        for (int k = 0; k < size[0]; k++) {
+            for (int j = 0; j < size[1]; j++) {
+                for (int i = 0; i < size[2]; i++) {
+                    // actual values
+                    int x = (int) (axisMin + axisRange * i / (size[0] - 1));
+                    int y = (int) (axisMin + axisRange * j / (size[1] - 1));
+                    int z = (int) (axisMin + axisRange * k / (size[2] - 1));
+                    scalarField.add( ((int)(x*x + y*y - z*z - 25)) );
                 }
             }
         }

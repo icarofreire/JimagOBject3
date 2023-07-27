@@ -14,6 +14,7 @@ marchingCubesShort(short[] values, int[] volDim, int volZFull, float[] voxDim, s
 
 /**
  * Created by Primoz on 11. 07. 2016.
+ * https://github.com/PrimozLavric/MarchingCubes
  */
 public class MarchingCubes {
     static float[] lerp(float[] vec1, float[] vec2, float alpha){

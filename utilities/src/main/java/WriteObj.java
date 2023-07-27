@@ -21,6 +21,10 @@ import jimagobject.utilities.ReadImages;
 import jimagobject.utilities.Picture;
 import jimagobject.utilities.Marching.MarchingCubes;
 import jimagobject.utilities.Marching.Vertex;
+import jimagobject.utilities.Marching.VolumeGenerator;
+
+import jimagobject.utilities.Meshcpp.MarchingCubesTransCpp;
+// import jimagobject.utilities.Meshcpp.Point;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -36,6 +40,8 @@ public final class WriteObj {
     private Vector<int[]> vRowsColumnsImages;
     private final ReadImages read = new ReadImages();
     private final MarchingCubes march = new MarchingCubes();
+
+    private final MarchingCubesTransCpp meshcpp = new MarchingCubesTransCpp();
 
     public void getVertex() {
 
@@ -81,7 +87,7 @@ public final class WriteObj {
             myWriter = new FileWriter(fObj, false);
         } catch (IOException e) { e.printStackTrace(); }
 
-        applyDimensionsImg(myWriter);
+        // applyDimensionsImg(myWriter);
         // teste2(myWriter);
         // teste3(myWriter);
 
@@ -99,12 +105,15 @@ public final class WriteObj {
         vRowsColumnsImages = read.getVRowsColumnsImages();
         boolean imagesPadroes = read.getImgPadrao();
         EdgeDetector edge = new EdgeDetector();
-        for(int i=0; i<vbytesImages.size(); i++){
+        int[][][] xpicels = null; /* << para testar outra estratégia de mesh; */
+        int i=0;{
+        // for(int i=0; i<vbytesImages.size(); i++){
             byte[] pixels = vbytesImages.get(i);
             /** \/ aplicação do edge detection; */
             int rows = vRowsColumnsImages.get(i)[0];
             int columns = vRowsColumnsImages.get(i)[1];
             Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
+            xpicels = new int[picEdgeDetect.width()][picEdgeDetect.width()][picEdgeDetect.width()];
             for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
                 for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
 
@@ -115,6 +124,7 @@ public final class WriteObj {
                         // x y z;
                         if(myWriter != null){
                             try {
+                                xpicels[y][x][z] = argb;
                                 myWriter.write("v " + (x) + " " + (y) + " " + z + "\n");
                             } catch (IOException e) { e.printStackTrace(); }
                         }
@@ -124,6 +134,13 @@ public final class WriteObj {
             z += 1; // sliceThickness
 
             // teste4(pixels, myWriter);
+
+            /**\/ testar outra estratégia de mesh; */
+            if(xpicels != null){
+                float isovalue = 72.0f; // << default in project;
+                Vector<Vector<Vector<Float>>> scalar = meshcpp.createScalarFunction(xpicels);
+                Vector<Vector<Point>> triangles = meshcpp.triangulate_field(scalar, isovalue);
+            }
         }
     }
 
@@ -185,8 +202,8 @@ public final class WriteObj {
         Vector<Vertex> vVert = new Vector<Vertex>();
 
 
-        int i=0;
-        // for(int i=0; i<vbytesImages.size(); i++)
+        // int i=0;
+        for(int i=0; i<vbytesImages.size(); i++)
         {
             byte[] pixels = vbytesImages.get(i);
             /** \/ aplicação do edge detection; */
@@ -204,8 +221,7 @@ public final class WriteObj {
                     // vVert.add( new Vertex(x + H, y - H, z) );
                     // vVert.add( new Vertex(x - H, y + H, z) );
                     // vVert.add( new Vertex(x + H, y + H, z) );
-                    if(!vVert.contains(vert))
-                        vVert.add(vert);
+                    if(!vVert.contains(vert)) vVert.add(vert);
                     // if(myWriter != null){
                     //     try {
                     //         myWriter.write("f " + (x) + " " + (y) + " " + (z) + "\n");
@@ -237,6 +253,9 @@ public final class WriteObj {
         int z = 1;
         int[] arrayPixels = arrayBytesTArrayInt(gpixels);
 
+        // arrayPixels = VolumeGenerator.generateScalarFieldInt(arrayPixels);
+        // Vector<Integer> vecArrayPixels = VolumeGenerator.generateScalarVolume(arrayPixels);
+
         int[] size = {64, 64, 64};
         float[] voxSize = {1.0f, 1.0f, 1.0f};
         Vector<float[]> vmarch = march.marchingCubesInt(
@@ -247,15 +266,15 @@ public final class WriteObj {
             5,/*0.5*/
             z
         );
-        // int id = 15;
-        // System.out.println("march: " + vmarch.size() + " -> " +  vmarch.get(id).length + " : " + vmarch.get(id)[0] + " : " + vmarch.get(id)[1] + " : " + vmarch.get(id)[2] );
-        for(float[] v: vmarch){
-            if(myWriter != null){
-                try {
-                    myWriter.write("f " + (v[0]) + " " + (v[1]) + " " + (v[2]) + "\n");
-                } catch (IOException e) { e.printStackTrace(); }
-            }
-        }
+        int id = 0;
+        System.out.println("march: " + vmarch.size() + " -> " +  vmarch.get(id).length + " : " + vmarch.get(id)[0] + " : " + vmarch.get(id)[1] + " : " + vmarch.get(id)[2] );
+        // for(float[] v: vmarch){
+        //     if(myWriter != null){
+        //         try {
+        //             myWriter.write("f " + (v[0]) + " " + (v[1]) + " " + (v[2]) + "\n");
+        //         } catch (IOException e) { e.printStackTrace(); }
+        //     }
+        // }
     }
 
 }
