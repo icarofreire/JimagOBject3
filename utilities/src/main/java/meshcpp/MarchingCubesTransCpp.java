@@ -361,9 +361,9 @@ public class MarchingCubesTransCpp {
         int intersectionsKey = edgeTable[cubeIndex];
 
         int idx = 0;
-        while (intersectionsKey > 0)
+        while (intersectionsKey != 0)
         {
-            if (intersectionsKey > 0)
+            if (intersectionsKey != 0)
             {
                 int v1 = edgeToVertices.get(idx).first, v2 = edgeToVertices.get(idx).second;
                 Point intersectionPoint = interpolate(cell.vertex[v1], cell.value[v1],
@@ -438,70 +438,121 @@ public class MarchingCubesTransCpp {
         return triangles;
     }
 
-    public Vector<Vector<Point>> triangulate_field(Vector<Vector<Vector<Float>>> scalarFunction, float isovalue)
+    public Vector<Vector<Point>> triangulate_field(Vector<Point> points, float isovalue)
     {
-        int max = scalarFunction.size();
         Vector<Vector<Point>> triangles = new Vector<Vector<Point>>();
 
-        for (int i = 0; i + 1 < max; i++)
-        {
-            for (int j = 0; j + 1 < max; j++)
-            {
-                for (int k = 0; k + 1 < max; k++)
+        for(Point p: points){
+            float x = p.x;
+            float y = p.y;
+            float z = p.z;
+            float k = z;//p.v;
+            GridCell cell = new GridCell(
+                new Point[]
                 {
-                    float x = i, y = j, z = k; 
-                    // cell ordered according to convention in referenced website
-                    GridCell cell = new GridCell(
-                        new Point[]
-                        {
-                            new Point(x, y, z),
-                            new Point(x + 1.0f, y, z),
-                            new Point(x + 1.0f, y, z + 1.0f),
-                            new Point(x, y, z + 1.0f),
-                            new Point(x, y + 1.0f, z),
-                            new Point(x + 1.0f, y + 1.0f, z),
-                            new Point(x + 1.0f, y + 1.0f, z + 1.0f),
-                            new Point(x, y + 1.0f, z + 1.0f)
-                        },
-                        new float[]
-                        {
-                            scalarFunction.get(i).get(j).get(k),
-                            scalarFunction.get(i+1).get(j).get(k),
-                            scalarFunction.get(i+1).get(j).get(k+1),
-                            scalarFunction.get(i).get(j).get(k+1),
-                            scalarFunction.get(i).get(j+1).get(k),
-                            scalarFunction.get(i+1).get(j+1).get(k),
-                            scalarFunction.get(i+1).get(j+1).get(k+1),
-                            scalarFunction.get(i).get(j+1).get(k+1)
-                        }
-                    );
-                    Vector<Vector<Point>> cellTriangles = triangulate_cell(cell, isovalue);
-                    for (int i2 = 0; i2 < cellTriangles.size(); i2++)
-                        triangles.add(cellTriangles.get(i2));
+                    new Point(x, y, z),
+                    new Point(x + 1.0f, y, z),
+                    new Point(x + 1.0f, y, z + 1.0f),
+                    new Point(x, y, z + 1.0f),
+                    new Point(x, y + 1.0f, z),
+                    new Point(x + 1.0f, y + 1.0f, z),
+                    new Point(x + 1.0f, y + 1.0f, z + 1.0f),
+                    new Point(x, y + 1.0f, z + 1.0f)
+                },
+                new float[]
+                {
+                    k,
+                    k,
+                    k+1,
+                    k+1,
+                    k,
+                    k,
+                    k+1,
+                    k+1
                 }
+            );
+            Vector<Vector<Point>> cellTriangles = triangulate_cell(cell, isovalue);
+            for (int i2 = 0; i2 < cellTriangles.size(); i2++){
+                triangles.add(cellTriangles.get(i2));
             }
         }
+
         return triangles;
     }
 
-    public Vector<Vector<Vector<Float>>> createScalarFunction(final int[][][] xpicels)
+    // public Vector<Vector<Point>> triangulate_field(Vector<Vector<Vector<Float>>> scalarFunction, float isovalue)
+    // {
+    //     int max = scalarFunction.size();
+    //     Vector<Vector<Point>> triangles = new Vector<Vector<Point>>();
+
+    //     for (int i = 0; i + 1 < max; i++)
+    //     {
+    //         for (int j = 0; j + 1 < max; j++)
+    //         {
+    //             for (int k = 0; k + 1 < max; k++)
+    //             {
+    //                 float x = i, y = j, z = k; 
+    //                 // cell ordered according to convention in referenced website
+    //                 GridCell cell = new GridCell(
+    //                     new Point[]
+    //                     {
+    //                         new Point(x, y, z),
+    //                         new Point(x + 1.0f, y, z),
+    //                         new Point(x + 1.0f, y, z + 1.0f),
+    //                         new Point(x, y, z + 1.0f),
+    //                         new Point(x, y + 1.0f, z),
+    //                         new Point(x + 1.0f, y + 1.0f, z),
+    //                         new Point(x + 1.0f, y + 1.0f, z + 1.0f),
+    //                         new Point(x, y + 1.0f, z + 1.0f)
+    //                     },
+    //                     new float[]
+    //                     {
+    //                         scalarFunction.get(i).get(j).get(k),
+    //                         scalarFunction.get(i+1).get(j).get(k),
+    //                         scalarFunction.get(i+1).get(j).get(k+1),
+    //                         scalarFunction.get(i).get(j).get(k+1),
+    //                         scalarFunction.get(i).get(j+1).get(k),
+    //                         scalarFunction.get(i+1).get(j+1).get(k),
+    //                         scalarFunction.get(i+1).get(j+1).get(k+1),
+    //                         scalarFunction.get(i).get(j+1).get(k+1)
+    //                     }
+    //                 );
+    //                 Vector<Vector<Point>> cellTriangles = triangulate_cell(cell, isovalue);
+    //                 for (int i2 = 0; i2 < cellTriangles.size(); i2++)
+    //                     triangles.add(cellTriangles.get(i2));
+    //             }
+    //         }
+    //     }
+    //     return triangles;
+    // }
+
+    public Vector<Vector<Vector<Float>>> createScalarFunction(final int[][][] xpicels, Vector<Point> pointsFile)
     {
         Vector<Vector<Vector<Float>>> scalarFunction = new Vector<Vector<Vector<Float>>>();
 
-        for (int y = 0; y < xpicels.length; y++) {
-            Vector<Vector<Float>> vy = new Vector<Vector<Float>>();
-            for (int x = 0; x < xpicels[y].length; x++) {
+        // for(Point p: pointsFile){
+        //     // p.x;
+        //     // p.y;
+        //     // p.z;
+        // }
 
-                Vector<Float> vz = new Vector<Float>();
-                for (int z = 0; z < xpicels[x].length; z++) {
-                    Integer argb = xpicels[y][x][z];
-                    vz.add(argb.floatValue());
-                }
-                vy.add(vz);
-            }
-            scalarFunction.add(vy);
-        }
-        
+
+        // for (int y = 0; y < xpicels.length; y++) {
+        //     Vector<Vector<Float>> vy = new Vector<Vector<Float>>();
+        //     for (int x = 0; x < xpicels[y].length; x++) {
+
+        //         Vector<Float> vz = new Vector<Float>();
+        //         for (int z = 0; z < xpicels[x].length; z++) {
+        //             Integer argb = xpicels[y][x][z];
+        //             vz.add(argb.floatValue());
+        //         }
+        //         vy.add(vz);
+        //     }
+        //     scalarFunction.add(vy);
+        // }
+        /**\/ ex: */
+        // Vector<Vector<Point>> triangles = triangulate_field(scalarFunction, 72.0f);
+
         // int i, j, k;
         // float value;
         // FILE* inputFile = fopen(path, "r");

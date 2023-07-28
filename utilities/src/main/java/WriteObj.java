@@ -17,6 +17,7 @@ import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 
+import jimagobject.utilities.LogFile;
 import jimagobject.utilities.ReadImages;
 import jimagobject.utilities.Picture;
 import jimagobject.utilities.Marching.MarchingCubes;
@@ -24,7 +25,7 @@ import jimagobject.utilities.Marching.Vertex;
 import jimagobject.utilities.Marching.VolumeGenerator;
 
 import jimagobject.utilities.Meshcpp.MarchingCubesTransCpp;
-// import jimagobject.utilities.Meshcpp.Point;
+import jimagobject.utilities.Meshcpp.Point;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -42,6 +43,7 @@ public final class WriteObj {
     private final MarchingCubes march = new MarchingCubes();
 
     private final MarchingCubesTransCpp meshcpp = new MarchingCubesTransCpp();
+    private final LogFile log = new LogFile();
 
     public void getVertex() {
 
@@ -90,6 +92,7 @@ public final class WriteObj {
         // applyDimensionsImg(myWriter);
         // teste2(myWriter);
         // teste3(myWriter);
+        readPoints();
 
         try {
             myWriter.close();
@@ -105,15 +108,14 @@ public final class WriteObj {
         vRowsColumnsImages = read.getVRowsColumnsImages();
         boolean imagesPadroes = read.getImgPadrao();
         EdgeDetector edge = new EdgeDetector();
-        int[][][] xpicels = null; /* << para testar outra estratégia de mesh; */
-        int i=0;{
-        // for(int i=0; i<vbytesImages.size(); i++){
+
+        // int i=10;{
+        for(int i=0; i<vbytesImages.size(); i++){
             byte[] pixels = vbytesImages.get(i);
             /** \/ aplicação do edge detection; */
             int rows = vRowsColumnsImages.get(i)[0];
             int columns = vRowsColumnsImages.get(i)[1];
             Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
-            xpicels = new int[picEdgeDetect.width()][picEdgeDetect.width()][picEdgeDetect.width()];
             for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
                 for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
 
@@ -124,7 +126,7 @@ public final class WriteObj {
                         // x y z;
                         if(myWriter != null){
                             try {
-                                xpicels[y][x][z] = argb;
+                                log.createPointsInFile(x, y, z, argb, true);
                                 myWriter.write("v " + (x) + " " + (y) + " " + z + "\n");
                             } catch (IOException e) { e.printStackTrace(); }
                         }
@@ -132,16 +134,37 @@ public final class WriteObj {
                 }
             }
             z += 1; // sliceThickness
-
-            // teste4(pixels, myWriter);
-
-            /**\/ testar outra estratégia de mesh; */
-            if(xpicels != null){
-                float isovalue = 72.0f; // << default in project;
-                Vector<Vector<Vector<Float>>> scalar = meshcpp.createScalarFunction(xpicels);
-                Vector<Vector<Point>> triangles = meshcpp.triangulate_field(scalar, isovalue);
-            }
         }
+        System.out.println(">>FIM;");
+    }
+
+    /**\/ testar outra estratégia de mesh; */
+    public void readPoints(){
+        float isovalue = 72.0f; // << default in project;
+        // Vector<Vector<Vector<Float>>> scalar = meshcpp.createScalarFunction(xpicels);
+
+        long maxPixelsLen = 0;
+        for(int i=0; i<vbytesImages.size(); i++){
+            byte[] pixels = vbytesImages.get(i);
+            maxPixelsLen = Math.max(maxPixelsLen, pixels.length);
+        }
+
+        int nByPage = 100000;
+        int minp = 1;
+        int maxp = nByPage;
+        while(maxp < maxPixelsLen){
+            // System.out.println("Page: " + minp + " -> " + maxp);
+            Vector<Point> pointsFile = log.readFilePoints(minp, maxp);
+            Vector<Vector<Point>> triangles = meshcpp.triangulate_field(pointsFile, isovalue);
+            System.out.println("Points:" + pointsFile.size() + " Triangles:" + triangles.size());
+
+            // if(maxp > 500){ break; } // << testes;
+
+            minp += maxp;
+            maxp *= 2;
+        }
+        // log.readFileByPages(20);
+        // log.deletarLog();
     }
 
     public void teste2(FileWriter myWriter){

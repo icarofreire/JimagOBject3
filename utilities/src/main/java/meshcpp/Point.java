@@ -9,15 +9,32 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.ArrayList;
 
-class Point implements Comparable<Point> {
+public class Point implements Comparable<Point> {
     public float x;
     public float y;
     public float z;
+    public float v;
     
     public Point(float x, float y, float z) {
         this.x = x;
         this.y = y;
         this.z = z;
+    }
+
+    public Point(float x, float y, float z, float v) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.v = v;
+    }
+
+    public Point(int x, int y, int z) {
+        Integer ix = x;
+        Integer iy = y;
+        Integer iz = z;
+        this.x = ix.floatValue();
+        this.y = iy.floatValue();
+        this.z = iz.floatValue();
     }
     
     public int compareTo(Point other) {
