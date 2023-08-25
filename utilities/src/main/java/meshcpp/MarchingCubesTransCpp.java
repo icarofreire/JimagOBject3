@@ -334,8 +334,16 @@ public class MarchingCubesTransCpp {
     int calculate_cube_index(GridCell cell, float isovalue)
     {
         int cubeIndex = 0;
-        for (int i = 0; i < 8; i++)
-            if (cell.value[i] < isovalue) cubeIndex |= (1 << i);
+        // for (int i = 0; i < 8; i++)
+            // if (cell.value[i] < isovalue) cubeIndex |= (1 << i);
+        if (cell.value[0] < isovalue) cubeIndex |= 1;
+        if (cell.value[1] < isovalue) cubeIndex |= 2;
+        if (cell.value[2] < isovalue) cubeIndex |= 4;
+        if (cell.value[3] < isovalue) cubeIndex |= 8;
+        if (cell.value[4] < isovalue) cubeIndex |= 16;
+        if (cell.value[5] < isovalue) cubeIndex |= 32;
+        if (cell.value[6] < isovalue) cubeIndex |= 64;
+        if (cell.value[7] < isovalue) cubeIndex |= 128;
         return cubeIndex;
     }
 
@@ -358,22 +366,33 @@ public class MarchingCubesTransCpp {
         Vector<Point> intersections = new Vector<Point>(12);
 
         int cubeIndex = calculate_cube_index(cell, isovalue);
+        // System.out.println("cubeIndex: " + cubeIndex + " hex:" + ((int) Long.parseLong(Integer.toHexString(cubeIndex), 16)) );
+        // System.out.println("cubeIndex: " + cubeIndex + " hex:" + (Integer.parseInt(Integer.toHexString(cubeIndex), 16)) + " edge:" + (0xff == 255) );
+        // System.out.println("***");
+
+        // int intersectionsKey = 0;
+        // for(int i=0; i<edgeTable.length; i++){
+        //     if( edgeTable[i] == (Integer.parseInt(Integer.toHexString(cubeIndex), 16)) ){
+        //         intersectionsKey = edgeTable[i]; break;
+        //     }
+        // }
+        // System.out.println("***");
         int intersectionsKey = edgeTable[cubeIndex];
 
         int idx = 0;
-        while (intersectionsKey != 0)
+        while (intersectionsKey > 0)
         {
-            if (intersectionsKey != 0)
+            if ((intersectionsKey & 1) > 0 /*&& idx < intersections.size() && idx < edgeToVertices.size()*/)
             {
                 int v1 = edgeToVertices.get(idx).first, v2 = edgeToVertices.get(idx).second;
                 Point intersectionPoint = interpolate(cell.vertex[v1], cell.value[v1],
                                                         cell.vertex[v2], cell.value[v2], isovalue);
-                intersections.set(idx, intersectionPoint);
+                // intersections.set(idx, intersectionPoint);
+                intersections.add(intersectionPoint);
             }
             idx++;
             intersectionsKey >>= 1;
         }
-
 
         return intersections;
     }
@@ -419,6 +438,9 @@ public class MarchingCubesTransCpp {
         int cubeIndex = calculate_cube_index(cell, isovalue);
         Vector<Point> intersections = get_intersection_coordinates(cell, isovalue);
         Vector<Vector<Point>> triangles = get_triangles(intersections, cubeIndex);
+        // System.out.println("cubeIndex:" + cubeIndex );
+        // System.out.println("inter:" + intersections.size());
+        // System.out.println("triangles:" + triangles.size());
 
         // int flag = 0;
         // for (auto triangle: triangles)
@@ -446,18 +468,18 @@ public class MarchingCubesTransCpp {
             float x = p.x;
             float y = p.y;
             float z = p.z;
-            float k = z;//p.v;
+            float k = p.v;
             GridCell cell = new GridCell(
                 new Point[]
                 {
-                    new Point(x, y, z),
-                    new Point(x + 1.0f, y, z),
-                    new Point(x + 1.0f, y, z + 1.0f),
-                    new Point(x, y, z + 1.0f),
-                    new Point(x, y + 1.0f, z),
-                    new Point(x + 1.0f, y + 1.0f, z),
-                    new Point(x + 1.0f, y + 1.0f, z + 1.0f),
-                    new Point(x, y + 1.0f, z + 1.0f)
+                    new Point(x, y, z),//v
+                    new Point(x + 1.0f, y, z),//v
+                    new Point(x + 1.0f, y, z + 1.0f),//v
+                    new Point(x, y, z + 1.0f),//v
+                    new Point(x, y + 1.0f, z),//v
+                    new Point(x + 1.0f, y + 1.0f, z),//v
+                    new Point(x + 1.0f, y + 1.0f, z + 1.0f),//v
+                    new Point(x, y + 1.0f, z + 1.0f)//v
                 },
                 new float[]
                 {

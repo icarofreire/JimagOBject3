@@ -26,6 +26,8 @@ import jimagobject.utilities.Marching.VolumeGenerator;
 
 import jimagobject.utilities.Meshcpp.MarchingCubesTransCpp;
 import jimagobject.utilities.Meshcpp.Point;
+import jimagobject.utilities.Meshcpp.Polygonise;
+import jimagobject.utilities.Meshcpp.GridCell;
 
 import javax.imageio.ImageIO;
 import java.awt.*;
@@ -47,25 +49,69 @@ public final class WriteObj {
 
     public void getVertex() {
 
-        // String dirImages = "/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004";
-        String dirImages = "/home/icaro/Downloads/dicom/teste/teste2";
-        // String dirImages = "/home/icaro/Downloads/dicom/teste/teste3";
+        // // String dirImages = "/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004";
+        // String dirImages = "/home/icaro/Downloads/dicom/teste/teste2";
+        // // String dirImages = "/home/icaro/Downloads/dicom/teste/teste3";
 
-        File dir = new File(dirImages);
-        if(dir.exists()){
-            read.read(dir);
-            vbytesImages = read.getVbytesImages();
-            // vRowsColumnsImages = read.getVRowsColumnsImages();
+        // File dir = new File(dirImages);
+        // if(dir.exists()){
+        //     read.read(dir);
+        //     vbytesImages = read.getVbytesImages();
+        //     // vRowsColumnsImages = read.getVRowsColumnsImages();
 
-            write();
-            // teste2();
+        //     write();
+        //     // teste2();
 
-            /**\/ painel de exibição da conversão da imagem; */
-            // testeInstanciaDICOM();
-        }else{
-            System.out.println("Diretório de imagens não existe;");
-        }
+        //     /**\/ painel de exibição da conversão da imagem; */
+        //     // testeInstanciaDICOM();
+        // }else{
+        //     System.out.println("Diretório de imagens não existe;");
+        // }
 
+        testeCubo();
+    }
+
+    public void testeCubo() {
+
+        float k = 72.0f;
+
+        GridCell cubo = new GridCell(
+            // new Point[]
+            // {
+            //     // f)
+            //     new Point(1.0f, 29.0f, 0.0f), new Point(2.0f, 29.0f, 0.0f),// [7]-[6]
+            //     new Point(1.0f, 28.0f, 0.0f), new Point(2.0f, 28.0f, 0.0f),// [3]-[2]
+            //     // b)
+            //     new Point(1.0f, 29.0f, 1.0f), new Point(2.0f, 29.0f, 1.0f),// [4]-[5]
+            //     new Point(1.0f, 28.0f, 1.0f), new Point(2.0f, 28.0f, 1.0f) // [0]-[1]
+            // },
+
+            new Point[]
+            {
+                new Point(1.0f, 28.0f, 1.0f),
+                new Point(2.0f, 28.0f, 1.0f),
+                new Point(2.0f, 28.0f, 0.0f),
+                new Point(1.0f, 28.0f, 0.0f),
+                new Point(1.0f, 29.0f, 1.0f),
+                new Point(2.0f, 29.0f, 1.0f),
+                new Point(2.0f, 29.0f, 0.0f),
+                new Point(1.0f, 29.0f, 0.0f)
+            },
+            new float[]
+            {
+                k,
+                k,
+                k+1,
+                k+1,
+                k,
+                k,
+                k+1,
+                k
+            }
+        );
+
+        Polygonise poly = new Polygonise();
+        poly.applyTriangulate(cubo);
     }
 
     /** teste em exibir uma instância de imagem dicom convertendo para
@@ -85,18 +131,57 @@ public final class WriteObj {
     public void write() {
         File logCheck = new File(fObj);
         FileWriter myWriter = null;
+        boolean append = false;
         try {
-            myWriter = new FileWriter(fObj, false);
+            myWriter = new FileWriter(fObj, append);
         } catch (IOException e) { e.printStackTrace(); }
 
-        // applyDimensionsImg(myWriter);
+        applyDimensionsImg(myWriter);
         // teste2(myWriter);
         // teste3(myWriter);
-        readPoints();
+        // readPoints();
 
         try {
             myWriter.close();
         } catch (IOException e) { e.printStackTrace(); }
+    }
+
+    /** extrair vertices de um cubo; */
+    private GridCell getRect(int x, int y, int z, Picture picEdgeDetect, int salt){
+        Color cor1 = picEdgeDetect.get(x, y);
+        Color cor2 = picEdgeDetect.get(x, y+salt);
+        Color cor3 = picEdgeDetect.get(x+salt, y);
+        Color cor4 = picEdgeDetect.get(x+salt, y+salt);
+
+        int argb1 = picEdgeDetect.getRGB(x, y);
+        int argb2 = picEdgeDetect.getRGB(x, y+salt);
+        int argb3 = picEdgeDetect.getRGB(x+salt, y);
+        int argb4 = picEdgeDetect.getRGB(x+salt, y+salt);
+
+        int alpha1 =  (argb1 >> 24) & 0xFF;
+        int alpha2 =  (argb2 >> 24) & 0xFF;
+        int alpha3 =  (argb3 >> 24) & 0xFF;
+        int alpha4 =  (argb4 >> 24) & 0xFF;
+
+        Point[] quad = new Point[4];
+        GridCell cell = new GridCell();
+        // if ( 
+        //     (alpha1 == 255 && cor1.equals(Color.black)) &&
+        //     (alpha2 == 255 && cor2.equals(Color.black)) &&
+        //     (alpha3 == 255 && cor3.equals(Color.black)) &&
+        //     (alpha4 == 255 && cor4.equals(Color.black))
+        //  ){
+            cell.vertex[0] = new Point(x, y, z);
+            cell.vertex[1] = new Point(x, y+salt, z);
+            cell.vertex[2] = new Point(x+salt, y, z);
+            cell.vertex[3] = new Point(x+salt, y+salt, z);
+
+            cell.value[0] = argb1;
+            cell.value[1] = argb2;
+            cell.value[2] = argb3;
+            cell.value[3] = argb4;
+        // }
+        return cell;
     }
 
     public void applyDimensionsImg(FileWriter myWriter){
@@ -119,18 +204,70 @@ public final class WriteObj {
             for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
                 for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
 
-                    Color cor = picEdgeDetect.get(x, y);
-                    int argb = picEdgeDetect.getRGB(x, y);
-                    int alpha =  (argb >> 24) & 0xFF;
-                    if (alpha == 255 && cor.equals(Color.black) ){
-                        // x y z;
-                        if(myWriter != null){
-                            try {
-                                log.createPointsInFile(x, y, z, argb, true);
-                                myWriter.write("v " + (x) + " " + (y) + " " + z + "\n");
-                            } catch (IOException e) { e.printStackTrace(); }
-                        }
+                    // cub
+                    int salt = 1;
+                    if(
+                        (((y+salt) < picEdgeDetect.height()) && ((x+salt) < picEdgeDetect.width())) &&
+                        ((i+salt) < vbytesImages.size())
+                    ){
+                        // frente
+                        GridCell quad1 = getRect(x, y, z, picEdgeDetect, salt);
+
+                        // fundo
+                        byte[] pixels2 = vbytesImages.get(i+salt);
+                        int rows2 = vRowsColumnsImages.get(i+salt)[0];
+                        int columns2 = vRowsColumnsImages.get(i+salt)[1];
+                        Picture picEdgeDetect2 = edge.apply(pixels2, columns2, rows2, imagesPadroes);
+
+                        GridCell quad2 = getRect(x, y, z+salt, picEdgeDetect2, salt);
+
+                        GridCell cubo = new GridCell();
+                        // vertices;
+                        cubo.vertex[0] = quad1.vertex[0];
+                        cubo.vertex[1] = quad1.vertex[1];
+                        cubo.vertex[2] = quad1.vertex[2];
+                        cubo.vertex[3] = quad1.vertex[3];
+
+                        cubo.vertex[4] = quad2.vertex[0];
+                        cubo.vertex[5] = quad2.vertex[1];
+                        cubo.vertex[6] = quad2.vertex[2];
+                        cubo.vertex[7] = quad2.vertex[3];
+
+                        // values;
+                        cubo.value[0] = quad1.value[0];
+                        cubo.value[1] = quad1.value[1];
+                        cubo.value[2] = quad1.value[2];
+                        cubo.value[3] = quad1.value[3];
+
+                        cubo.value[4] = quad2.value[0];
+                        cubo.value[5] = quad2.value[1];
+                        cubo.value[6] = quad2.value[2];
+                        cubo.value[7] = quad2.value[3];
+
+                        Polygonise poly = new Polygonise();
+                        poly.applyTriangulate(cubo);
+
+                        // for(int k=0; k<8; k++){
+                        //     System.out.println( k + " vert: [x:" + cubo.vertex[k].x + ", y:" + cubo.vertex[k].y + ", z:" + cubo.vertex[k].z+"]" );
+                        // }
+                        // System.out.println("***");
+                        // break;
                     }
+                    // cub
+
+                    // Color cor = picEdgeDetect.get(x, y);
+                    // int argb = picEdgeDetect.getRGB(x, y);
+                    // int alpha =  (argb >> 24) & 0xFF;
+                    // if (alpha == 255 && cor.equals(Color.black) ){
+                    //     // x y z;
+                    //     if(myWriter != null){
+                    //         try {
+                    //             log.createPointsInFile(x, y, z, cor.getRGB(), true);
+                    //             myWriter.write("v " + (x) + " " + (y) + " " + z + "\n");
+                    //         } catch (IOException e) { e.printStackTrace(); }
+                    //     }
+                    // }
+
                 }
             }
             z += 1; // sliceThickness
@@ -140,6 +277,7 @@ public final class WriteObj {
 
     /**\/ testar outra estratégia de mesh; */
     public void readPoints(){
+        Polygonise poly = new Polygonise();
         float isovalue = 72.0f; // << default in project;
         // Vector<Vector<Vector<Float>>> scalar = meshcpp.createScalarFunction(xpicels);
 
@@ -156,6 +294,7 @@ public final class WriteObj {
             // System.out.println("Page: " + minp + " -> " + maxp);
             Vector<Point> pointsFile = log.readFilePoints(minp, maxp);
             Vector<Vector<Point>> triangles = meshcpp.triangulate_field(pointsFile, isovalue);
+            // Vector<Vector<Point>> triangles = poly.triangulate_field(pointsFile, isovalue);
             System.out.println("Points:" + pointsFile.size() + " Triangles:" + triangles.size());
 
             // if(maxp > 500){ break; } // << testes;

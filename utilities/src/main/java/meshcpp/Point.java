@@ -14,6 +14,10 @@ public class Point implements Comparable<Point> {
     public float y;
     public float z;
     public float v;
+
+    public Point(){
+        
+    }
     
     public Point(float x, float y, float z) {
         this.x = x;
@@ -46,20 +50,20 @@ public class Point implements Comparable<Point> {
     }
 }
 
-class GridCell {
-    public Point[] vertex;
-    public float[] value;
+// class GridCell {
+//     public Point[] vertex;
+//     public float[] value;
     
-    public GridCell() {
-        vertex = new Point[8];
-        value = new float[8];
-    }
+//     public GridCell() {
+//         vertex = new Point[8];
+//         value = new float[8];
+//     }
 
-    public GridCell(Point[] vertex, float[] value) {
-        this.vertex = vertex;
-        this.value = value;
-    }
-}
+//     public GridCell(Point[] vertex, float[] value) {
+//         this.vertex = vertex;
+//         this.value = value;
+//     }
+// }
 
 class VertexContainer {
     public Map<Point, Integer> vertexMap;

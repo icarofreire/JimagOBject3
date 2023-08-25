@@ -18,16 +18,16 @@ import jimagobject.utilities.Meshcpp.Point;
  */
 public class Polygonise {
 
-    private final double isolevel = 30.0;
+    private final double isolevel = 72.0f;
 
     private class TRIANGLE {
         public Point[] p = new Point[3];
     }
 
-    private class GRIDCELL {
-        public Point[] p = new Point[8];
-        public double[] val = new double[8];
-    }
+    // private class GRIDCELL {
+    //     public Point[] p = new Point[8];
+    //     public double[] val = new double[8];
+    // }
 
     /*
     Given a grid cell and an isolevel, calculate the triangular
@@ -37,7 +37,7 @@ public class Polygonise {
         0 will be returned if the grid cell is either totally above
     of totally below the isolevel.
     */
-    int Polygonise(GRIDCELL grid, double isolevel, TRIANGLE[] triangles)
+    int gPolygonise(/*GRIDCELL*/ GridCell grid, double isolevel, /*TRIANGLE[] triangles*/ Vector<TRIANGLE> triangles)
     {
         int i,ntriang;
         int cubeindex;
@@ -345,14 +345,21 @@ public class Polygonise {
             tells us which vertices are inside of the surface
         */
         cubeindex = 0;
-        if (grid.val[0] < isolevel) cubeindex |= 1;
-        if (grid.val[1] < isolevel) cubeindex |= 2;
-        if (grid.val[2] < isolevel) cubeindex |= 4;
-        if (grid.val[3] < isolevel) cubeindex |= 8;
-        if (grid.val[4] < isolevel) cubeindex |= 16;
-        if (grid.val[5] < isolevel) cubeindex |= 32;
-        if (grid.val[6] < isolevel) cubeindex |= 64;
-        if (grid.val[7] < isolevel) cubeindex |= 128;
+        // for (int k = 0; k < 8; k++)
+        //     if (grid.value[k] < isolevel) cubeindex |= (1 << k);
+
+        /* \/ modifiquei o operador para testar descrição encontrada em artigo:
+        http://repositorio.ufla.br/jspui/bitstream/1/10756/1/MONOGRAFIA_Gera%C3%A7%C3%A3o_de_isossuperf%C3%ADcies_pelos_algoritmos_marching_cubes_e_varia%C3%A7%C3%B5es.pdf
+        */
+        if (grid.value[0] > isolevel) cubeindex |= 1;
+        if (grid.value[1] > isolevel) cubeindex |= 2;
+        if (grid.value[2] > isolevel) cubeindex |= 4;
+        if (grid.value[3] > isolevel) cubeindex |= 8;
+        if (grid.value[4] > isolevel) cubeindex |= 16;
+        if (grid.value[5] > isolevel) cubeindex |= 32;
+        if (grid.value[6] > isolevel) cubeindex |= 64;
+        if (grid.value[7] > isolevel) cubeindex |= 128;
+        System.out.println("cubeindex: " + cubeindex + " : " + edgeTable[cubeindex]);
 
         /* Cube is entirely in/out of the surface */
         if (edgeTable[cubeindex] == 0)
@@ -360,36 +367,41 @@ public class Polygonise {
 
         /* Find the vertices where the surface intersects the cube */
         if ((edgeTable[cubeindex] & 1) > 0)
-            vertlist[0] = VertexInterp(isolevel,grid.p[0],grid.p[1],grid.val[0],grid.val[1]);
+            vertlist[0] = VertexInterp(isolevel,grid.vertex[0],grid.vertex[1],grid.value[0],grid.value[1]);
         if ((edgeTable[cubeindex] & 2) > 0)
-            vertlist[1] = VertexInterp(isolevel,grid.p[1],grid.p[2],grid.val[1],grid.val[2]);
+            vertlist[1] = VertexInterp(isolevel,grid.vertex[1],grid.vertex[2],grid.value[1],grid.value[2]);
         if ((edgeTable[cubeindex] & 4) > 0)
-            vertlist[2] = VertexInterp(isolevel,grid.p[2],grid.p[3],grid.val[2],grid.val[3]);
+            vertlist[2] = VertexInterp(isolevel,grid.vertex[2],grid.vertex[3],grid.value[2],grid.value[3]);
         if ((edgeTable[cubeindex] & 8) > 0)
-            vertlist[3] = VertexInterp(isolevel,grid.p[3],grid.p[0],grid.val[3],grid.val[0]);
+            vertlist[3] = VertexInterp(isolevel,grid.vertex[3],grid.vertex[0],grid.value[3],grid.value[0]);
         if ((edgeTable[cubeindex] & 16) > 0)
-            vertlist[4] = VertexInterp(isolevel,grid.p[4],grid.p[5],grid.val[4],grid.val[5]);
+            vertlist[4] = VertexInterp(isolevel,grid.vertex[4],grid.vertex[5],grid.value[4],grid.value[5]);
         if ((edgeTable[cubeindex] & 32) > 0)
-            vertlist[5] = VertexInterp(isolevel,grid.p[5],grid.p[6],grid.val[5],grid.val[6]);
+            vertlist[5] = VertexInterp(isolevel,grid.vertex[5],grid.vertex[6],grid.value[5],grid.value[6]);
         if ((edgeTable[cubeindex] & 64) > 0)
-            vertlist[6] = VertexInterp(isolevel,grid.p[6],grid.p[7],grid.val[6],grid.val[7]);
+            vertlist[6] = VertexInterp(isolevel,grid.vertex[6],grid.vertex[7],grid.value[6],grid.value[7]);
         if ((edgeTable[cubeindex] & 128) > 0)
-            vertlist[7] = VertexInterp(isolevel,grid.p[7],grid.p[4],grid.val[7],grid.val[4]);
+            vertlist[7] = VertexInterp(isolevel,grid.vertex[7],grid.vertex[4],grid.value[7],grid.value[4]);
         if ((edgeTable[cubeindex] & 256) > 0)
-            vertlist[8] = VertexInterp(isolevel,grid.p[0],grid.p[4],grid.val[0],grid.val[4]);
+            vertlist[8] = VertexInterp(isolevel,grid.vertex[0],grid.vertex[4],grid.value[0],grid.value[4]);
         if ((edgeTable[cubeindex] & 512) > 0)
-            vertlist[9] = VertexInterp(isolevel,grid.p[1],grid.p[5],grid.val[1],grid.val[5]);
+            vertlist[9] = VertexInterp(isolevel,grid.vertex[1],grid.vertex[5],grid.value[1],grid.value[5]);
         if ((edgeTable[cubeindex] & 1024) > 0)
-            vertlist[10] = VertexInterp(isolevel,grid.p[2],grid.p[6],grid.val[2],grid.val[6]);
+            vertlist[10] = VertexInterp(isolevel,grid.vertex[2],grid.vertex[6],grid.value[2],grid.value[6]);
         if ((edgeTable[cubeindex] & 2048) > 0)
-            vertlist[11] = VertexInterp(isolevel,grid.p[3],grid.p[7],grid.val[3],grid.val[7]);
+            vertlist[11] = VertexInterp(isolevel,grid.vertex[3],grid.vertex[7],grid.value[3],grid.value[7]);
 
         /* Create the triangle */
         ntriang = 0;
         for (i=0;triangleTable[cubeindex][i]!=-1;i+=3) {
-            triangles[ntriang].p[0] = vertlist[triangleTable[cubeindex][i  ]];
-            triangles[ntriang].p[1] = vertlist[triangleTable[cubeindex][i+1]];
-            triangles[ntriang].p[2] = vertlist[triangleTable[cubeindex][i+2]];
+            // triangles[ntriang].p[0] = vertlist[triangleTable[cubeindex][i  ]];
+            // triangles[ntriang].p[1] = vertlist[triangleTable[cubeindex][i+1]];
+            // triangles[ntriang].p[2] = vertlist[triangleTable[cubeindex][i+2]];
+            TRIANGLE tri = new TRIANGLE();
+            tri.p[0] = vertlist[triangleTable[cubeindex][i  ]];
+            tri.p[1] = vertlist[triangleTable[cubeindex][i+1]];
+            tri.p[2] = vertlist[triangleTable[cubeindex][i+2]];
+            triangles.add( tri );
             ntriang++;
         }
 
@@ -417,6 +429,64 @@ public class Polygonise {
         p.z = p1.z + (float)mu * (p2.z - p1.z);
 
         return(p);
+    }
+
+    public Vector<Vector<Point>> triangulate_field(Vector<Point> points, float isovalue)
+    {
+        Vector<Vector<Point>> triangles = new Vector<Vector<Point>>();
+
+        for(Point p: points){
+            float x = p.x;
+            float y = p.y;
+            float z = p.z;
+            float k = p.v;
+            GridCell cell = new GridCell(
+                new Point[]
+                {
+                    new Point(x, y, z),                         //v [1]
+                    new Point(x + 1.0f, y, z),                  //v [2]
+                    new Point(x + 1.0f, y, z + 1.0f),           //v [3]
+                    new Point(x, y, z + 1.0f),                  //v [4]
+                    new Point(x, y + 1.0f, z),                  //v [5]
+                    new Point(x + 1.0f, y + 1.0f, z),           //v [6]
+                    new Point(x + 1.0f, y + 1.0f, z + 1.0f),    //v [7]
+                    new Point(x, y + 1.0f, z + 1.0f)            //v [8]
+                },
+                new float[]
+                {
+                    k,
+                    k,
+                    k+1,
+                    k+1,
+                    k,
+                    k,
+                    k+1,
+                    k+1
+                }
+            );
+            // Vector<Vector<Point>> cellTriangles = triangulate_cell(cell, isovalue);
+            // for (int i2 = 0; i2 < cellTriangles.size(); i2++){
+            //     triangles.add(cellTriangles.get(i2));
+            // }
+            Vector<TRIANGLE> trianglesT = new Vector<TRIANGLE>();
+            int ntri = gPolygonise(cell, this.isolevel, trianglesT);
+            // System.out.println("Ntri: " + ntri + " : gP:" + trianglesT.size());
+
+            System.out.println(  ">>" + x + "::" + y + "::" + z );
+
+            break;
+        }
+
+        return triangles;
+    }
+
+    public void applyTriangulate(GridCell cubo)
+    {
+        Vector<TRIANGLE> trianglesT = new Vector<TRIANGLE>();
+        int ntri = gPolygonise(cubo, this.isolevel, trianglesT);
+        // System.out.println("Ntri: " + ntri + " : gP:" + trianglesT.size());
+        // if(ntri > 0 || trianglesT.size() > 0)
+            System.out.println(  ">>" + ntri + ", T: " + trianglesT.size() );
     }
 
 }
