@@ -48,27 +48,29 @@ public final class WriteObj {
     private final LogFile log = new LogFile();
 
     public void getVertex() {
+        readImagesAndMesh();
+        // testeCubo();
+    }
 
-        // // String dirImages = "/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004";
-        // String dirImages = "/home/icaro/Downloads/dicom/teste/teste2";
-        // // String dirImages = "/home/icaro/Downloads/dicom/teste/teste3";
+    public void readImagesAndMesh() {
+        // String dirImages = "/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004";
+        String dirImages = "/home/icaro/Downloads/dicom/teste/teste2";
+        // String dirImages = "/home/icaro/Downloads/dicom/teste/teste3";
 
-        // File dir = new File(dirImages);
-        // if(dir.exists()){
-        //     read.read(dir);
-        //     vbytesImages = read.getVbytesImages();
-        //     // vRowsColumnsImages = read.getVRowsColumnsImages();
+        File dir = new File(dirImages);
+        if(dir.exists()){
+            read.read(dir);
+            vbytesImages = read.getVbytesImages();
+            // vRowsColumnsImages = read.getVRowsColumnsImages();
 
-        //     write();
-        //     // teste2();
+            write();
+            // teste2();
 
-        //     /**\/ painel de exibição da conversão da imagem; */
-        //     // testeInstanciaDICOM();
-        // }else{
-        //     System.out.println("Diretório de imagens não existe;");
-        // }
-
-        testeCubo();
+            /**\/ painel de exibição da conversão da imagem; */
+            // testeInstanciaDICOM();
+        }else{
+            System.out.println("Diretório de imagens não existe;");
+        }
     }
 
     public void testeCubo() {
@@ -98,11 +100,21 @@ public final class WriteObj {
                 new Point(1.0f, 29.0f, 0.0f)
             },
             new float[]
+            // {
+            //     k,
+            //     k,
+            //     k+1,
+            //     k+1,
+            //     k,
+            //     k,
+            //     k+1,
+            //     k
+            // }
             {
-                k,
-                k,
                 k+1,
                 k+1,
+                k,
+                k,
                 k,
                 k,
                 k+1,
@@ -163,25 +175,106 @@ public final class WriteObj {
         int alpha3 =  (argb3 >> 24) & 0xFF;
         int alpha4 =  (argb4 >> 24) & 0xFF;
 
-        Point[] quad = new Point[4];
+        // Point[] quad = new Point[4];
+        float isovalue = 72.0f;
         GridCell cell = new GridCell();
         // if ( 
-        //     (alpha1 == 255 && cor1.equals(Color.black)) &&
-        //     (alpha2 == 255 && cor2.equals(Color.black)) &&
-        //     (alpha3 == 255 && cor3.equals(Color.black)) &&
-        //     (alpha4 == 255 && cor4.equals(Color.black))
+            // ((alpha1 == 255 && cor1.equals(Color.black)) ? (isovalue+1) : (isovalue))
+            // ((alpha2 == 255 && cor2.equals(Color.black)) ? (isovalue+1) : (isovalue))
+            // ((alpha3 == 255 && cor3.equals(Color.black)) ? (isovalue+1) : (isovalue))
+            // ((alpha4 == 255 && cor4.equals(Color.black)) ? (isovalue+1) : (isovalue))
         //  ){
             cell.vertex[0] = new Point(x, y, z);
             cell.vertex[1] = new Point(x, y+salt, z);
             cell.vertex[2] = new Point(x+salt, y, z);
             cell.vertex[3] = new Point(x+salt, y+salt, z);
 
-            cell.value[0] = argb1;
-            cell.value[1] = argb2;
-            cell.value[2] = argb3;
-            cell.value[3] = argb4;
+            // cell.value[0] = isovalue;//argb1;
+            // cell.value[1] = isovalue;//argb2;
+            // cell.value[2] = isovalue;//argb3;
+            // cell.value[3] = isovalue;//argb4;
+            cell.value[0] = ((alpha1 == 255 && cor1.equals(Color.black)) ? (isovalue+1) : (isovalue));
+            cell.value[1] = ((alpha2 == 255 && cor2.equals(Color.black)) ? (isovalue+1) : (isovalue));
+            cell.value[2] = ((alpha3 == 255 && cor3.equals(Color.black)) ? (isovalue+1) : (isovalue));
+            cell.value[3] = ((alpha4 == 255 && cor4.equals(Color.black)) ? (isovalue+1) : (isovalue));
         // }
         return cell;
+    }
+
+    private void regVectors(int x, int y, int z, Picture picEdgeDetect, FileWriter myWriter){
+        Color cor = picEdgeDetect.get(x, y);
+        int argb = picEdgeDetect.getRGB(x, y);
+        int alpha =  (argb >> 24) & 0xFF;
+        if (alpha == 255 && cor.equals(Color.black) ){
+            // x y z;
+            if(myWriter != null){
+                try {
+                    log.createPointsInFile(x, y, z, cor.getRGB(), true);
+                    myWriter.write("v " + (x) + " " + (y) + " " + z + "\n");
+                } catch (IOException e) { e.printStackTrace(); }
+            }
+        }
+    }
+
+    private void regFaces(int i, int x, int y, int z, Picture picEdgeDetect, EdgeDetector edge, boolean imagesPadroes, FileWriter myWriter){
+        // cub
+        int salt = 1;
+        if(
+            (((y+salt) < picEdgeDetect.height()) && ((x+salt) < picEdgeDetect.width())) &&
+            ((i+salt) < vbytesImages.size())
+        ){
+            // frente
+            GridCell quad1 = getRect(x, y, z, picEdgeDetect, salt);
+
+            // fundo
+            byte[] pixels2 = vbytesImages.get(i+salt);
+            int rows2 = vRowsColumnsImages.get(i+salt)[0];
+            int columns2 = vRowsColumnsImages.get(i+salt)[1];
+            Picture picEdgeDetect2 = edge.apply(pixels2, columns2, rows2, imagesPadroes);
+
+            GridCell quad2 = getRect(x, y, z+salt, picEdgeDetect2, salt);
+
+            GridCell cubo = new GridCell();
+            // vertices;
+            cubo.vertex[0] = quad1.vertex[0];
+            cubo.vertex[1] = quad1.vertex[1];
+            cubo.vertex[2] = quad1.vertex[2];
+            cubo.vertex[3] = quad1.vertex[3];
+
+            cubo.vertex[4] = quad2.vertex[0];
+            cubo.vertex[5] = quad2.vertex[1];
+            cubo.vertex[6] = quad2.vertex[2];
+            cubo.vertex[7] = quad2.vertex[3];
+
+            // values;
+            cubo.value[0] = quad1.value[0];
+            cubo.value[1] = quad1.value[1];
+            cubo.value[2] = quad1.value[2];
+            cubo.value[3] = quad1.value[3];
+
+            cubo.value[4] = quad2.value[0];
+            cubo.value[5] = quad2.value[1];
+            cubo.value[6] = quad2.value[2];
+            cubo.value[7] = quad2.value[3];
+
+            Polygonise poly = new Polygonise();
+            String faces = poly.applyTriangulate(cubo);
+
+            // for(int k=0; k<8; k++){
+            //     System.out.println( k + " vert: [x:" + cubo.vertex[k].x + ", y:" + cubo.vertex[k].y + ", z:" + cubo.vertex[k].z+"]" );
+            // }
+            if(faces != ""){
+                // System.out.println( faces );
+                // System.out.println("***");
+                if(myWriter != null){
+                    try {
+                        myWriter.write(faces);
+                    } catch (IOException e) { e.printStackTrace(); }
+                }
+            }
+            // break;
+        }
+        // cub
     }
 
     public void applyDimensionsImg(FileWriter myWriter){
@@ -204,69 +297,8 @@ public final class WriteObj {
             for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
                 for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
 
-                    // cub
-                    int salt = 1;
-                    if(
-                        (((y+salt) < picEdgeDetect.height()) && ((x+salt) < picEdgeDetect.width())) &&
-                        ((i+salt) < vbytesImages.size())
-                    ){
-                        // frente
-                        GridCell quad1 = getRect(x, y, z, picEdgeDetect, salt);
-
-                        // fundo
-                        byte[] pixels2 = vbytesImages.get(i+salt);
-                        int rows2 = vRowsColumnsImages.get(i+salt)[0];
-                        int columns2 = vRowsColumnsImages.get(i+salt)[1];
-                        Picture picEdgeDetect2 = edge.apply(pixels2, columns2, rows2, imagesPadroes);
-
-                        GridCell quad2 = getRect(x, y, z+salt, picEdgeDetect2, salt);
-
-                        GridCell cubo = new GridCell();
-                        // vertices;
-                        cubo.vertex[0] = quad1.vertex[0];
-                        cubo.vertex[1] = quad1.vertex[1];
-                        cubo.vertex[2] = quad1.vertex[2];
-                        cubo.vertex[3] = quad1.vertex[3];
-
-                        cubo.vertex[4] = quad2.vertex[0];
-                        cubo.vertex[5] = quad2.vertex[1];
-                        cubo.vertex[6] = quad2.vertex[2];
-                        cubo.vertex[7] = quad2.vertex[3];
-
-                        // values;
-                        cubo.value[0] = quad1.value[0];
-                        cubo.value[1] = quad1.value[1];
-                        cubo.value[2] = quad1.value[2];
-                        cubo.value[3] = quad1.value[3];
-
-                        cubo.value[4] = quad2.value[0];
-                        cubo.value[5] = quad2.value[1];
-                        cubo.value[6] = quad2.value[2];
-                        cubo.value[7] = quad2.value[3];
-
-                        Polygonise poly = new Polygonise();
-                        poly.applyTriangulate(cubo);
-
-                        // for(int k=0; k<8; k++){
-                        //     System.out.println( k + " vert: [x:" + cubo.vertex[k].x + ", y:" + cubo.vertex[k].y + ", z:" + cubo.vertex[k].z+"]" );
-                        // }
-                        // System.out.println("***");
-                        // break;
-                    }
-                    // cub
-
-                    // Color cor = picEdgeDetect.get(x, y);
-                    // int argb = picEdgeDetect.getRGB(x, y);
-                    // int alpha =  (argb >> 24) & 0xFF;
-                    // if (alpha == 255 && cor.equals(Color.black) ){
-                    //     // x y z;
-                    //     if(myWriter != null){
-                    //         try {
-                    //             log.createPointsInFile(x, y, z, cor.getRGB(), true);
-                    //             myWriter.write("v " + (x) + " " + (y) + " " + z + "\n");
-                    //         } catch (IOException e) { e.printStackTrace(); }
-                    //     }
-                    // }
+                    // regVectors(x, y, z, picEdgeDetect, myWriter);
+                    regFaces(i, x, y, z, picEdgeDetect, edge, imagesPadroes, myWriter);
 
                 }
             }
@@ -306,137 +338,137 @@ public final class WriteObj {
         // log.deletarLog();
     }
 
-    public void teste2(FileWriter myWriter){
-        int z = 1;
-        double spaceBetweenLayers = 0.005;
-        double xCoordScale = 0.01;
-        double yCoordScale = 0.01;
-        double sliceThickness = read.getSliceThickness();
-        vRowsColumnsImages = read.getVRowsColumnsImages();
-        boolean imagesPadroes = read.getImgPadrao();
-        EdgeDetector edge = new EdgeDetector();
+    // public void teste2(FileWriter myWriter){
+    //     int z = 1;
+    //     double spaceBetweenLayers = 0.005;
+    //     double xCoordScale = 0.01;
+    //     double yCoordScale = 0.01;
+    //     double sliceThickness = read.getSliceThickness();
+    //     vRowsColumnsImages = read.getVRowsColumnsImages();
+    //     boolean imagesPadroes = read.getImgPadrao();
+    //     EdgeDetector edge = new EdgeDetector();
 
-        for(int i=0; i<vbytesImages.size(); i++){
-            byte[] pixels = vbytesImages.get(i);
-            /** \/ aplicação do edge detection; */
-            int rows = vRowsColumnsImages.get(i)[0];
-            int columns = vRowsColumnsImages.get(i)[1];
-            Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
+    //     for(int i=0; i<vbytesImages.size(); i++){
+    //         byte[] pixels = vbytesImages.get(i);
+    //         /** \/ aplicação do edge detection; */
+    //         int rows = vRowsColumnsImages.get(i)[0];
+    //         int columns = vRowsColumnsImages.get(i)[1];
+    //         Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
 
-            int[][] allPoints = new int[picEdgeDetect.height()][picEdgeDetect.width()];
+    //         int[][] allPoints = new int[picEdgeDetect.height()][picEdgeDetect.width()];
 
-            for (int y = 0; y < picEdgeDetect.height(); y++) {
-                for (int x = 0; x < picEdgeDetect.width(); x++) {
-                    allPoints[y][x] = picEdgeDetect.getRGB(x, y);
-                }
-            }
+    //         for (int y = 0; y < picEdgeDetect.height(); y++) {
+    //             for (int x = 0; x < picEdgeDetect.width(); x++) {
+    //                 allPoints[y][x] = picEdgeDetect.getRGB(x, y);
+    //             }
+    //         }
 
-            // march.calculatingFacets(allPoints,  myWriter);
-        }
+    //         // march.calculatingFacets(allPoints,  myWriter);
+    //     }
 
-    }
+    // }
 
-    public void teste3(FileWriter myWriter){
-        int z = 1;
-        double spaceBetweenLayers = 0.005;
-        double xCoordScale = 0.01;
-        double yCoordScale = 0.01;
-        double sliceThickness = read.getSliceThickness();
-        vRowsColumnsImages = read.getVRowsColumnsImages();
-        boolean imagesPadroes = read.getImgPadrao();
-        EdgeDetector edge = new EdgeDetector();
-
-
-        // byte[] pixels = vbytesImages.get(i);
-        // /** \/ aplicação do edge detection; */
-        // int rows = vRowsColumnsImages.get(i)[0];
-        // int columns = vRowsColumnsImages.get(i)[1];
-        // int[][] yxs = new int[picEdgeDetect.height()][picEdgeDetect.height()];
-        // Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
-        // for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
-        //     for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
-        //         // yxs[y][x] = 
-        //         Vertex vert = new Vertex(x, y, z);
-        //     }
-        // }
-
-        final int H = 1;
-        Vector<Vertex> vVert = new Vector<Vertex>();
+    // public void teste3(FileWriter myWriter){
+    //     int z = 1;
+    //     double spaceBetweenLayers = 0.005;
+    //     double xCoordScale = 0.01;
+    //     double yCoordScale = 0.01;
+    //     double sliceThickness = read.getSliceThickness();
+    //     vRowsColumnsImages = read.getVRowsColumnsImages();
+    //     boolean imagesPadroes = read.getImgPadrao();
+    //     EdgeDetector edge = new EdgeDetector();
 
 
-        // int i=0;
-        for(int i=0; i<vbytesImages.size(); i++)
-        {
-            byte[] pixels = vbytesImages.get(i);
-            /** \/ aplicação do edge detection; */
-            int rows = vRowsColumnsImages.get(i)[0];
-            int columns = vRowsColumnsImages.get(i)[1];
-            Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
+    //     // byte[] pixels = vbytesImages.get(i);
+    //     // /** \/ aplicação do edge detection; */
+    //     // int rows = vRowsColumnsImages.get(i)[0];
+    //     // int columns = vRowsColumnsImages.get(i)[1];
+    //     // int[][] yxs = new int[picEdgeDetect.height()][picEdgeDetect.height()];
+    //     // Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
+    //     // for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
+    //     //     for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
+    //     //         // yxs[y][x] = 
+    //     //         Vertex vert = new Vertex(x, y, z);
+    //     //     }
+    //     // }
 
-            // int[][] allPoints = new int[picEdgeDetect.height()][picEdgeDetect.width()];
+    //     final int H = 1;
+    //     Vector<Vertex> vVert = new Vector<Vertex>();
 
-            for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
-                for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
-                    // allPoints[y][x] = picEdgeDetect.getRGB(x, y);
-                    Vertex vert = new Vertex(x, y, z);
-                    // vVert.add( new Vertex(x - H, y - H, z) );
-                    // vVert.add( new Vertex(x + H, y - H, z) );
-                    // vVert.add( new Vertex(x - H, y + H, z) );
-                    // vVert.add( new Vertex(x + H, y + H, z) );
-                    if(!vVert.contains(vert)) vVert.add(vert);
-                    // if(myWriter != null){
-                    //     try {
-                    //         myWriter.write("f " + (x) + " " + (y) + " " + (z) + "\n");
-                    //         // myWriter.write("f " + (x + H) + " " + (y - H) + " " + (z) + "\n");
-                    //         // myWriter.write("f " + (x - H) + " " + (y + H) + " " + (z) + "\n");
-                    //         // myWriter.write("f " + (x + H) + " " + (y + H) + " " + (z) + "\n");
-                    //     } catch (IOException e) { e.printStackTrace(); }
-                    // }
-                }
-            }
-            z++;
-            march.calculatingFacets(vVert,  myWriter);
-        }
 
-        System.out.println(">>FIM;");
-    }
+    //     // int i=0;
+    //     for(int i=0; i<vbytesImages.size(); i++)
+    //     {
+    //         byte[] pixels = vbytesImages.get(i);
+    //         /** \/ aplicação do edge detection; */
+    //         int rows = vRowsColumnsImages.get(i)[0];
+    //         int columns = vRowsColumnsImages.get(i)[1];
+    //         Picture picEdgeDetect = edge.apply(pixels, columns, rows, imagesPadroes);
 
-    public int[] arrayBytesTArrayInt(byte[] gpixels){
-        java.nio.IntBuffer intBuf =
-        java.nio.ByteBuffer.wrap(gpixels)
-            .order(java.nio.ByteOrder.LITTLE_ENDIAN)
-            .asIntBuffer();
-        int[] arrayPixels = new int[intBuf.remaining()];
-        intBuf.get(arrayPixels);
-        return arrayPixels;
-    }
+    //         // int[][] allPoints = new int[picEdgeDetect.height()][picEdgeDetect.width()];
 
-    public void teste4(byte[] gpixels, FileWriter myWriter){
-        int z = 1;
-        int[] arrayPixels = arrayBytesTArrayInt(gpixels);
+    //         for (int y = 1; y < picEdgeDetect.height() - 1; y++) {
+    //             for (int x = 1; x < picEdgeDetect.width() - 1; x++) {
+    //                 // allPoints[y][x] = picEdgeDetect.getRGB(x, y);
+    //                 Vertex vert = new Vertex(x, y, z);
+    //                 // vVert.add( new Vertex(x - H, y - H, z) );
+    //                 // vVert.add( new Vertex(x + H, y - H, z) );
+    //                 // vVert.add( new Vertex(x - H, y + H, z) );
+    //                 // vVert.add( new Vertex(x + H, y + H, z) );
+    //                 if(!vVert.contains(vert)) vVert.add(vert);
+    //                 // if(myWriter != null){
+    //                 //     try {
+    //                 //         myWriter.write("f " + (x) + " " + (y) + " " + (z) + "\n");
+    //                 //         // myWriter.write("f " + (x + H) + " " + (y - H) + " " + (z) + "\n");
+    //                 //         // myWriter.write("f " + (x - H) + " " + (y + H) + " " + (z) + "\n");
+    //                 //         // myWriter.write("f " + (x + H) + " " + (y + H) + " " + (z) + "\n");
+    //                 //     } catch (IOException e) { e.printStackTrace(); }
+    //                 // }
+    //             }
+    //         }
+    //         z++;
+    //         march.calculatingFacets(vVert,  myWriter);
+    //     }
 
-        // arrayPixels = VolumeGenerator.generateScalarFieldInt(arrayPixels);
-        // Vector<Integer> vecArrayPixels = VolumeGenerator.generateScalarVolume(arrayPixels);
+    //     System.out.println(">>FIM;");
+    // }
 
-        int[] size = {64, 64, 64};
-        float[] voxSize = {1.0f, 1.0f, 1.0f};
-        Vector<float[]> vmarch = march.marchingCubesInt(
-            arrayPixels,
-            new int[]{size[0], size[1], 2/*paddedSegmentSize*/},
-            size[2],
-            voxSize,
-            5,/*0.5*/
-            z
-        );
-        int id = 0;
-        System.out.println("march: " + vmarch.size() + " -> " +  vmarch.get(id).length + " : " + vmarch.get(id)[0] + " : " + vmarch.get(id)[1] + " : " + vmarch.get(id)[2] );
-        // for(float[] v: vmarch){
-        //     if(myWriter != null){
-        //         try {
-        //             myWriter.write("f " + (v[0]) + " " + (v[1]) + " " + (v[2]) + "\n");
-        //         } catch (IOException e) { e.printStackTrace(); }
-        //     }
-        // }
-    }
+    // public int[] arrayBytesTArrayInt(byte[] gpixels){
+    //     java.nio.IntBuffer intBuf =
+    //     java.nio.ByteBuffer.wrap(gpixels)
+    //         .order(java.nio.ByteOrder.LITTLE_ENDIAN)
+    //         .asIntBuffer();
+    //     int[] arrayPixels = new int[intBuf.remaining()];
+    //     intBuf.get(arrayPixels);
+    //     return arrayPixels;
+    // }
+
+    // public void teste4(byte[] gpixels, FileWriter myWriter){
+    //     int z = 1;
+    //     int[] arrayPixels = arrayBytesTArrayInt(gpixels);
+
+    //     // arrayPixels = VolumeGenerator.generateScalarFieldInt(arrayPixels);
+    //     // Vector<Integer> vecArrayPixels = VolumeGenerator.generateScalarVolume(arrayPixels);
+
+    //     int[] size = {64, 64, 64};
+    //     float[] voxSize = {1.0f, 1.0f, 1.0f};
+    //     Vector<float[]> vmarch = march.marchingCubesInt(
+    //         arrayPixels,
+    //         new int[]{size[0], size[1], 2/*paddedSegmentSize*/},
+    //         size[2],
+    //         voxSize,
+    //         5,/*0.5*/
+    //         z
+    //     );
+    //     int id = 0;
+    //     System.out.println("march: " + vmarch.size() + " -> " +  vmarch.get(id).length + " : " + vmarch.get(id)[0] + " : " + vmarch.get(id)[1] + " : " + vmarch.get(id)[2] );
+    //     // for(float[] v: vmarch){
+    //     //     if(myWriter != null){
+    //     //         try {
+    //     //             myWriter.write("f " + (v[0]) + " " + (v[1]) + " " + (v[2]) + "\n");
+    //     //         } catch (IOException e) { e.printStackTrace(); }
+    //     //     }
+    //     // }
+    // }
 
 }

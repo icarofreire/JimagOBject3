@@ -359,7 +359,7 @@ public class Polygonise {
         if (grid.value[5] > isolevel) cubeindex |= 32;
         if (grid.value[6] > isolevel) cubeindex |= 64;
         if (grid.value[7] > isolevel) cubeindex |= 128;
-        System.out.println("cubeindex: " + cubeindex + " : " + edgeTable[cubeindex]);
+        // System.out.println("cubeindex: " + cubeindex + " : " + edgeTable[cubeindex]);
 
         /* Cube is entirely in/out of the surface */
         if (edgeTable[cubeindex] == 0)
@@ -480,13 +480,35 @@ public class Polygonise {
         return triangles;
     }
 
-    public void applyTriangulate(GridCell cubo)
+    public String applyTriangulate(GridCell cubo)
     {
         Vector<TRIANGLE> trianglesT = new Vector<TRIANGLE>();
         int ntri = gPolygonise(cubo, this.isolevel, trianglesT);
-        // System.out.println("Ntri: " + ntri + " : gP:" + trianglesT.size());
         // if(ntri > 0 || trianglesT.size() > 0)
-            System.out.println(  ">>" + ntri + ", T: " + trianglesT.size() );
+            // System.out.println(  ">>" + ntri + ", T: " + trianglesT.size() );
+        return printTriangles(trianglesT);
+    }
+
+    public String printTriangles(Vector<TRIANGLE> triangles){
+        int x=0, y=1, z=2;
+        String linesf = "";
+        if(triangles.size() > 0){
+            for(TRIANGLE triangle: triangles){
+                // linesf += "f " + triangles.get(0).p[x] + " " + triangles.get(0).p[y] + " " + triangles.get(0).p[z] + "\n";
+                // linesf += "f " + triangles.get(1).p[x] + " " + triangles.get(1).p[y] + " " + triangles.get(1).p[z] + "\n";
+                // linesf += "f " + triangles.get(2).p[x] + " " + triangles.get(2).p[y] + " " + triangles.get(2).p[z] + "\n";
+
+                for(int i=0; i<triangle.p.length; i++){
+                    // System.out.println( triangle.p[i].x + " " + triangle.p[i].y + " " + triangle.p[i].z );
+                    linesf += "f " + triangle.p[i].x + " " + triangle.p[i].y + " " + triangle.p[i].z + "\n";
+                }
+                // System.out.println( linesf );
+                // System.out.println( "+++" );
+
+                // linesf += "f " + triangle.p[x] + " " + triangle.p[y] + " " + triangle.p[z] + "\n";
+            }
+        }
+        return linesf;
     }
 
 }

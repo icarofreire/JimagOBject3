@@ -65,12 +65,12 @@ public class Point implements Comparable<Point> {
 //     }
 // }
 
-class VertexContainer {
-    public Map<Point, Integer> vertexMap;
-    public List<List<Integer>> triangles;
+// class VertexContainer {
+//     public Map<Point, Integer> vertexMap;
+//     public List<List<Integer>> triangles;
     
-    public VertexContainer() {
-        vertexMap = new HashMap<>();
-        triangles = new ArrayList<>();
-    }
-}
+//     public VertexContainer() {
+//         vertexMap = new HashMap<>();
+//         triangles = new ArrayList<>();
+//     }
+// }
