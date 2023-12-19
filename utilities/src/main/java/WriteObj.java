@@ -38,7 +38,10 @@ public final class WriteObj {
 
         // String dirImages = "/home/icaro/Downloads/dicom/ABDOMEN/VOL_ARTERIAL_0004";
         // String dirImages = "/home/icaro/Downloads/dicom/teste/teste2";
-        String dirImages = "/home/icaro/Downloads/dicom/teste/teste3";
+        // String dirImages = "/home/icaro/Downloads/dicom/teste/teste3";
+        // String dirImages = "/home/icaro/Imagens/Down-aoyodfycvh";
+        String dirImages = "/home/icaro/Imagens/teste";
+        // String dirImages = "/home/icaro/Imagens/xor_test2";
 
         File dir = new File(dirImages);
         if(dir.exists()){

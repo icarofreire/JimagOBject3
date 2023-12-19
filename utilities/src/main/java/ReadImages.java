@@ -24,6 +24,8 @@ import AC_DicomIO.AC_DicomReader;
 
 public final class ReadImages {
 
+    private final int maxImagesRead = 20;
+
     private final HashMap<Long, byte[]> instanceNumberFileBytes = new HashMap<Long, byte[]>();
     private final Vector<byte[]> vbytesImages = new Vector<byte[]>();
     private final Vector<int[]> vRowsColumnsImages = new Vector<int[]>();
@@ -54,7 +56,7 @@ public final class ReadImages {
     public void read(File dirImages) {
         if(dirImages.exists()){
             File[] files = dirImages.listFiles();
-            long index = 0;
+            long index = 0, con = 0;
             for(File img: files){
                 if(ifExt(img.getName(), filesTypesDICOM)){
                     LinkedHashMap<Integer, String[]> atributesDicom = parseDicom(img);
@@ -85,6 +87,10 @@ public final class ReadImages {
                         sliceThickness = "0.5";
                         vRowsColumnsImages.add(new int[]{500, 500});
                     }catch(IOException e){}
+                }
+                con++;
+                if(con >= maxImagesRead){
+                    break;
                 }
             }
             hashSetToTreeMap();

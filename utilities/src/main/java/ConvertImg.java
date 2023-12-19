@@ -20,8 +20,11 @@ import java.io.ByteArrayInputStream;
 import javax.imageio.ImageIO;
 import java.awt.image.WritableRaster;
 import java.nio.ByteOrder;
+import java.nio.ShortBuffer;
 import java.awt.image.DataBufferByte;
 import java.awt.image.ColorModel;
+import java.awt.image.DirectColorModel;
+import java.awt.image.IndexColorModel;
 import java.awt.image.ComponentSampleModel;
 import java.awt.image.SampleModel;
 
@@ -32,15 +35,62 @@ import java.awt.image.SampleModel;
  */
 public final class ConvertImg {
 
+private final int TYPE_CUSTOM = 0;
+private final int TYPE_INT_RGB = 1;
+private final int TYPE_INT_ARGB = 2;
+private final int TYPE_INT_ARGB_PRE = 3;
+private final int TYPE_INT_BGR = 4;
+private final int TYPE_3BYTE_BGR = 5;
+private final int TYPE_4BYTE_ABGR = 6;
+private final int TYPE_4BYTE_ABGR_PRE = 7;
+private final int TYPE_USHORT_565_RGB = 8;
+private final int TYPE_USHORT_555_RGB = 9;
+private final int TYPE_BYTE_GRAY = 10;
+private final int TYPE_USHORT_GRAY = 11;
+private final int TYPE_BYTE_BINARY = 12;
+private final int TYPE_BYTE_INDEXED = 13;
+
+// ***
+
+private final int DCM_RED_MASK   = 0x00ff0000;
+private final int DCM_GREEN_MASK = 0x0000ff00;
+private final int DCM_BLUE_MASK  = 0x000000ff;
+private final int DCM_ALPHA_MASK = 0xff000000;
+private final int DCM_565_RED_MASK = 0xf800;
+private final int DCM_565_GRN_MASK = 0x07E0;
+private final int DCM_565_BLU_MASK = 0x001F;
+private final int DCM_555_RED_MASK = 0x7C00;
+private final int DCM_555_GRN_MASK = 0x03E0;
+private final int DCM_555_BLU_MASK = 0x001F;
+private final int DCM_BGR_RED_MASK = 0x0000ff;
+private final int DCM_BGR_GRN_MASK = 0x00ff00;
+private final int DCM_BGR_BLU_MASK = 0xff0000;
+
     public BufferedImage apply(byte[] bytesImage, int width, int height, boolean imagesPadroes) {
         BufferedImage image = null;
 
         if(imagesPadroes) {
             image = byteToBufferedImageIMG(bytesImage);
         }else{
-            image = byteToBufferedImage(bytesImage, width, height);
+            // image = byteToBufferedImage(bytesImage, width, height);
             // image = createNoCopy(width, height, bytesImage);
+            image = createNoCopyTestes(width, height, bytesImage);
             // image = createRGBImage(bytesImage, width, height);
+
+            // System.out.println( bytesImage[0] + ", " + bytesImage[1] + ", " + bytesImage[2] );
+            // bytesImage = toEndian(bytesImage);
+            // System.out.println( bytesImage[0] + ", " + bytesImage[1] + ", " + bytesImage[2] );
+
+            // try{
+            // image = convertByteArrayToBufferedImage(bytesImage, width, height);
+            // }catch(IOException e){}
+
+            // image = plotRGB(bytesImage, width, height);
+            // image = getImageFromArray(bytesImage, width, height);
+            // image = convertByteBufferToBufferedImage(bytesImage, width, height);
+            // image = toBufferedImageAbgr(width, height, bytesImage);
+            // image = fromByteIntensity(image, bytesImage, width, height);
+
         }
 
         // System.out.println("IMG:" + image);
@@ -75,6 +125,25 @@ public final class ConvertImg {
         return newBi;
     }
 
+    // private ByteBuffer getByteBuffer(byte[] bytes) {
+	//     return ByteBuffer.wrap(bytes).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+	// }
+
+    public static short[] toShortArray(byte[] data, /*int offset, int len,*/ boolean bigEndian) {
+        ByteBuffer byteBuffer = ByteBuffer.wrap(data/*, offset, len*/);
+
+        if (bigEndian) {
+            byteBuffer.order(ByteOrder.BIG_ENDIAN);
+        } else {
+            byteBuffer.order(ByteOrder.LITTLE_ENDIAN);
+        }
+
+        ShortBuffer shortBuf = byteBuffer.asShortBuffer();
+        short[] array = new short[shortBuf.remaining()];
+        shortBuf.get(array);
+        return array;
+    }
+
     /**
      * https://stackoverflow.com/questions/42841566/pixel-data-of-a-16-bit-dicom-image-to-bufferedimage
      */
@@ -82,9 +151,11 @@ public final class ConvertImg {
         short[] rawShorts = new short[rawBytes.length / 2];
 
         ByteBuffer.wrap(rawBytes)
-                .order(java.nio.ByteOrder.BIG_ENDIAN) // Depending on the data's endianness
+                .order(java.nio.ByteOrder.LITTLE_ENDIAN) // Depending on the data's endianness
                 .asShortBuffer()
                 .get(rawShorts);
+
+        // short[] rawShorts = toShortArray(rawBytes, false);
 
         DataBuffer dataBuffer = new DataBufferUShort(rawShorts, rawShorts.length);
         int stride = 1;
@@ -101,6 +172,70 @@ public final class ConvertImg {
     //     return new BufferedImage(cm, Raster.createInterleavedRaster(buffer, width, height, width * 3, 3, new int[]{0, 1, 2}, null), false, null);
     // }
 
+    private BufferedImage plotRGB(byte rgb[], int width, int height) {
+        BufferedImage b = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int y = 0; y < height; y++) {
+            int base = y * width;
+            for (int x = 0; x < width; x++) {
+                b.setRGB(x, y, rgb[base + x]);
+            }
+        }
+        return b;
+    }
+
+    private BufferedImage convertByteBufferToBufferedImage(byte[] buffer, int width, int height) {
+        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+        for (int x = 0; x < width; x++) {
+            for (int y = 0; y < height; y++) {
+            int i = (x + width * y) * 4;
+            if(i+2 < buffer.length){
+                int r = buffer[i] & 0xFF;
+                int g = buffer[i + 1] & 0xFF;
+                int b = buffer[i + 2] & 0xFF;
+                image.setRGB(x, height - (y + 1), (0xFF << 24) | (r << 16) | (g << 8) | b);
+            }
+            }
+        }
+        return image;
+    }
+
+    BufferedImage toBufferedImageAbgr(int width, int height, byte[] abgrData) {
+        DataBuffer dataBuffer = new DataBufferByte(abgrData, width * height * 8, 0);
+        ColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB),
+                new int[] {8,8,8,8}, true, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+        WritableRaster raster = Raster.createInterleavedRaster(
+                dataBuffer, width, height, width * 4, 4, new int[] {3, 2, 1, 0}, null);
+        BufferedImage image = new BufferedImage(colorModel, raster, false, null);
+        return image;
+    }
+
+    public BufferedImage fromByteIntensity(BufferedImage image, byte[] bytes, int width, int height) {
+        // int width = image.getWidth();
+        // int height = image.getHeight();
+        // case BufferedImage.TYPE_INT_RGB: {
+            image = new BufferedImage(width, height, BufferedImage.TYPE_INT_RGB);
+            int[] data = new int[bytes.length*3];
+            for (int i = 0; i < bytes.length; i++) {
+                int b = bytes[i] & 0xff;
+                data[i] = (((((0xff << 8) | b) << 8) | b) << 8) | b;
+            }
+            image.getWritableTile(0, 0).setDataElements(0, 0, width, height, data);
+            return image;
+        // }
+        // case BufferedImage.TYPE_3BYTE_BGR: {
+            // byte[] data = new byte[bytes.length * 3];
+            // int offset = 0;
+            // for (int i = 0; i < bytes.length; i++) {
+            //     byte b = bytes[i];
+            //     data[offset++] = b;
+            //     data[offset++] = b;
+            //     data[offset++] = b;
+            // }
+            // image.getWritableTile(0, 0).setDataElements(0, 0, width, height, data);
+            // return image;
+        // }
+    }
+
     /**[OK]; */
     private BufferedImage createNoCopy(int w, int h, byte[] rawBytes) {
         DataBuffer dataBuffer = new DataBufferByte(rawBytes, rawBytes.length);
@@ -112,6 +247,216 @@ public final class ConvertImg {
         ColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false, false, Transparency.OPAQUE, DataBuffer.TYPE_USHORT);
 
         return new BufferedImage(colorModel, raster, colorModel.isAlphaPremultiplied(), null);
+    }
+
+    private BufferedImage createNoCopyTestes(int w, int h, byte[] rawBytes) {
+        DataBuffer dataBuffer = new DataBufferByte(rawBytes, rawBytes.length);
+
+        int stride = 2;
+        SampleModel sampleModel = new MyComponentSampleModel(w, h, stride, true);
+        WritableRaster raster = Raster.createWritableRaster(sampleModel, dataBuffer, null);
+
+        ColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_GRAY), false, false, Transparency.OPAQUE, DataBuffer.TYPE_USHORT);
+
+        // ColorModel colorModel = new ComponentColorModel(
+        // ColorSpace.getInstance(ColorSpace.CS_GRAY), 
+        // new int[]{16}, // bits
+        // false, // hasAlpha
+        // false, // isPreMultiplied
+        // Transparency.OPAQUE, 
+        // DataBuffer.TYPE_USHORT);
+
+        // ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+
+
+        // int imageType = TYPE_USHORT_GRAY;
+        // ColorModel colorModel = createColorModel(imageType);
+        // ColorModel colorModel = ColorModel.getRGBdefault();
+        // ColorModel colorModel = new ComponentColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), false, false, Transparency.OPAQUE, DataBuffer.TYPE_USHORT);
+        // raster = colorModel.createCompatibleWritableRaster(w, h);
+        // raster = Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, w, h, w * 4, 4, new int[] {3, 0, 1, 2}, null);
+
+        // BufferedImage bufferedImage=new BufferedImage(w, h, BufferedImage.TYPE_INT_RGB);
+        // bufferedImage.setData(Raster.createRaster(sampleModel, new DataBufferByte(rawBytes, rawBytes.length*2), new java.awt.Point()));
+        // return bufferedImage;
+
+        // raster = createRaster(w, h, imageType, colorModel);
+        // raster = Raster.createWritableRaster(sampleModel, dataBuffer, null);
+
+        return new BufferedImage(colorModel, raster, false, null);
+    }
+
+    public byte[] asByteArray(ByteBuffer buf) {
+        byte[] result;
+        if (buf.hasArray() && buf.arrayOffset() == 0
+                && buf.capacity() == buf.remaining()) {
+            result = buf.array();
+        } else {
+            result = new byte[buf.remaining()];
+            if (buf.hasArray()) {
+                System.arraycopy(buf.array(),
+                        buf.arrayOffset() + buf.position(), result, 0,
+                        result.length);
+            } else {
+                // Direct buffer
+                ByteBuffer duplicate = buf.duplicate();
+                duplicate.mark();
+                duplicate.get(result);
+                duplicate.reset();
+            }
+        }
+        return result;
+    }
+
+    private byte[] toEndian(byte[] byteArray) {
+        ByteBuffer buf = ByteBuffer.wrap(byteArray);
+        // if (ByteOrder.nativeOrder().equals(ByteOrder.LITTLE_ENDIAN)) {
+            buf = buf.order(ByteOrder.LITTLE_ENDIAN);
+        // }
+        // return bb.array();
+        // byte[] arr = new byte[buf.remaining()];
+        // buf.get(arr);
+        return asByteArray(buf);
+    }
+
+    // convert byte[] to a BufferedImage
+    public BufferedImage convertByteArrayToBufferedImage(byte[] byteArr, int width, int height) throws IOException {
+        BufferedImage bufferedImage=new BufferedImage(width, height, BufferedImage.TYPE_INT_BGR);
+        Raster raster = Raster.createRaster(bufferedImage.getSampleModel(), new DataBufferByte(byteArr, byteArr.length), new java.awt.Point());
+        bufferedImage.setData(raster);
+        return bufferedImage;
+    }
+
+
+    /**
+     * Create a new WritableRaster based on the current imageType and ColorModel.
+     */
+    private WritableRaster createRaster(int width, int height, int imageType, ColorModel colorModel){
+        switch(imageType){
+            case TYPE_INT_RGB:
+            case TYPE_INT_ARGB:
+            case TYPE_INT_ARGB_PRE:
+            case TYPE_INT_BGR:
+            case TYPE_BYTE_GRAY:
+            case TYPE_USHORT_GRAY:
+            case TYPE_USHORT_565_RGB:
+            case TYPE_USHORT_555_RGB: {
+                return colorModel.createCompatibleWritableRaster(width, height);
+            }
+            case TYPE_3BYTE_BGR: {
+                int[] bOffs = {2, 1, 0};
+                return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, width * 3, 3, bOffs, null);
+            }
+            case TYPE_4BYTE_ABGR:
+            case TYPE_4BYTE_ABGR_PRE: {
+                int[] bOffs = {3, 2, 1, 0};
+                return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, width * 4, 4, bOffs, null);
+            }
+            case TYPE_BYTE_BINARY: {
+                return Raster.createPackedRaster(DataBuffer.TYPE_BYTE, width, height, 1, 1, null);
+            }
+            case TYPE_BYTE_INDEXED: {
+                return Raster.createInterleavedRaster(DataBuffer.TYPE_BYTE, width, height, 1, null);
+            }
+            default:
+                throw new IllegalArgumentException("Unknown image type " + imageType);
+        }
+    }
+
+    /**
+     * Create a new ColorModel based on the current imageType.
+     */
+    private ColorModel createColorModel(int imageType){
+        switch(imageType){
+            case TYPE_INT_RGB: {
+                return new DirectColorModel(24, 0x00ff0000, // Red
+                        0x0000ff00, // Green
+                        0x000000ff, // Blue
+                        0x0 // Alpha
+                );
+            }
+            case TYPE_INT_ARGB: {
+                return ColorModel.getRGBdefault();
+            }
+            case TYPE_INT_ARGB_PRE: {
+                return new DirectColorModel(ColorSpace.getInstance(ColorSpace.CS_sRGB), 32, 0x00ff0000,// Red
+                        0x0000ff00,// Green
+                        0x000000ff,// Blue
+                        0xff000000,// Alpha
+                        true, // Alpha Premultiplied
+                        DataBuffer.TYPE_INT);
+            }
+            case TYPE_INT_BGR: {
+                return new DirectColorModel(24, 0x000000ff, // Red
+                        0x0000ff00, // Green
+                        0x00ff0000 // Blue
+                );
+            }
+            case TYPE_3BYTE_BGR: {
+                ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+                int[] nBits = {8, 8, 8};
+                return new ComponentColorModel(cs, nBits, false, false, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+            }
+            case TYPE_4BYTE_ABGR: {
+                ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+                int[] nBits = {8, 8, 8, 8};
+                return new ComponentColorModel(cs, nBits, true, false, Transparency.TRANSLUCENT,
+                        DataBuffer.TYPE_BYTE);
+            }
+            case TYPE_4BYTE_ABGR_PRE: {
+                ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_sRGB);
+                int[] nBits = {8, 8, 8, 8};
+                return new ComponentColorModel(cs, nBits, true, true, Transparency.TRANSLUCENT,
+                        DataBuffer.TYPE_BYTE);
+            }
+            case TYPE_BYTE_GRAY: {
+                ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
+                int[] nBits = {8};
+                return new ComponentColorModel(cs, nBits, false, true, Transparency.OPAQUE, DataBuffer.TYPE_BYTE);
+            }
+            case TYPE_USHORT_GRAY: {
+                ColorSpace cs = ColorSpace.getInstance(ColorSpace.CS_GRAY);
+                int[] nBits = {16};
+                return new ComponentColorModel(cs, nBits, false, true, Transparency.OPAQUE,
+                        DataBuffer.TYPE_USHORT);
+            }
+            case TYPE_BYTE_BINARY: {
+                byte[] arr = {(byte)0, (byte)0xff};
+
+                return new IndexColorModel(1, 2, arr, arr, arr);
+            }
+            case TYPE_BYTE_INDEXED: {
+                // Create a 6x6x6 color cube
+                int[] cmap = new int[256];
+                int i = 0;
+                for(int r = 0; r < 256; r += 51){
+                    for(int g = 0; g < 256; g += 51){
+                        for(int b = 0; b < 256; b += 51){
+                            cmap[i++] = (r << 16) | (g << 8) | b;
+                        }
+                    }
+                }
+                // And populate the rest of the cmap with gray values
+                int grayIncr = 256 / (256 - i);
+
+                // The gray ramp will be between 18 and 252
+                int gray = grayIncr * 3;
+                for(; i < 256; i++){
+                    cmap[i] = (gray << 16) | (gray << 8) | gray;
+                    gray += grayIncr;
+                }
+
+                return new IndexColorModel(8, 256, cmap, 0, false, -1, DataBuffer.TYPE_BYTE);
+            }
+            case TYPE_USHORT_565_RGB: {
+                return new DirectColorModel(16, DCM_565_RED_MASK, DCM_565_GRN_MASK, DCM_565_BLU_MASK);
+            }
+            case TYPE_USHORT_555_RGB: {
+                return new DirectColorModel(15, DCM_555_RED_MASK, DCM_555_GRN_MASK, DCM_555_BLU_MASK);
+            }
+            default:
+                throw new IllegalArgumentException("Unknown image type " + imageType);
+        }
     }
 
     private class MyComponentSampleModel extends ComponentSampleModel {
